@@ -1,5 +1,5 @@
 clean:
-	rm -fR *.png *.zip *.egg *.html *.xml pylintrc
+	rm -fR *.png *.zip *.egg *.html *.xml
 	rm -fR .eggs/ *.egg-info/ .coverage/ build/ dist/ docs/_build
 	find . -name '*~' -exec rm -f {} +
 	python setup.py clean --all
@@ -7,17 +7,16 @@ clean:
 mib:
 	curl -G ftp://ftp.apc.com/apc/public/software/pnetmib/mib/417/powernet417.mib > powernet.mib
 	build-pysnmp-mib -o PowerNet-MIB.py powernet.mib
-	sed -i '1 a # NOTE: This line has been added by `make mib` -------------------------------!' PowerNet-MIB.py
+	sed -i '1 a # NOTE: This line has been added by `make mib` ------------------------------!' PowerNet-MIB.py
 	sed -i '2 a # flake8: noqa' PowerNet-MIB.py
 	sed -i '3 a # pylint: skip-file' PowerNet-MIB.py
-	sed -i '4 a # -----------------------------------------------------------------------------' PowerNet-MIB.py
-	sed -i '14 a # NOTE: This line has been added by `make mib` -------------------------------!' PowerNet-MIB.py
+	sed -i '4 a # ----------------------------------------------------------------------------' PowerNet-MIB.py
+	sed -i '14 a # NOTE: This line has been added by `make mib` ------------------------------!' PowerNet-MIB.py
 	sed -i '15 a ( Unsigned32, ) = mibBuilder.importSymbols("SNMPv2-SMI", "Unsigned32")' PowerNet-MIB.py
-	sed -i '16 a # -----------------------------------------------------------------------------' PowerNet-MIB.py
+	sed -i '16 a # ----------------------------------------------------------------------------' PowerNet-MIB.py
 	mv PowerNet-MIB.py pynoc/
 
 check:
-	curl -G http://stash.impinj.com/projects/DI/repos/pycqa/browse/pylintrc -d raw -d at=refs/tags/1.2 > pylintrc
 	python setup.py check --strict --metadata --verbose
 	python setup.py lint --lint-output="pylint.html"
 	python setup.py flake8
