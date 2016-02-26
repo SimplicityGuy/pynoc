@@ -5,10 +5,9 @@ sudo: required
 dist: trusty
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get -y install snmp python-pip
+  - sudo apt-get -y install snmp python-pip python-pysnmp4
 install:
   - pip install --upgrade pip setuptools flake8 flake8-docstrings
-  - pip install pysnmp
 script:
   - make all
 deploy:
