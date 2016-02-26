@@ -67,8 +67,8 @@ class APC(object):
     OUTLET_STATUS_TYPES = ['', 'off', 'on']
 
     def _get_query_string(self, query, param=None):
-        """
-        Generate a well-formatted SNMP query string
+        """Generate a well-formatted SNMP query string.
+
         :param query: which query to use
         :param param: additional parameter, usually outlet number
         :return: well-formatted SNMP query string
@@ -79,12 +79,12 @@ class APC(object):
 
     def __init__(self, hostname_or_ip_address,
                  public_community, private_community):
-        """
+        """Create an APC object.
 
-        :param hostname_or_ip_address:
-        :param public_community:
-        :param private_community:
-        :return:
+        :param hostname_or_ip_address: hostname or ip address of PDU
+        :param public_community: public community string
+        :param private_community: private community string
+        :return: APC object
         """
         self._host = hostname_or_ip_address
         self._vendor = 'APC'
@@ -137,106 +137,120 @@ class APC(object):
 
     @property
     def host(self):
-        """
-        :return: The PDU hostname or ip address
+        """Hostname or IP Address of PDU.
+
+        :return: PDU hostname or ip address
         """
         return self._host
 
     @property
     def vendor(self):
-        """
-        :return: The PDU vendor/manufacturer
+        """Vendor/Manufacturer of PDU.
+
+        :return: PDU vendor/manufacturer
         """
         return self._vendor
 
     @property
     def identification(self):
-        """
-        :return: The PDU identification
+        """Identification string.
+
+        :return: PDU identification
         """
         return self._identification
 
     @property
     def location(self):
-        """
-        :return: The PDU location
+        """Location of the PDU.
+
+        :return: PDU location
         """
         return self._location
 
     @property
     def hardware_revision(self):
-        """
-        :return: The PDU hardware revision
+        """Hardware revision.
+
+        :return: PDU hardware revision
         """
         return str(self._hardware_rev)
 
     @property
     def firmware_revision(self):
-        """
-        :return: The PDU firmware revision
+        """Firmware revision.
+
+        :return: PDU firmware revision
         """
         return str(self._firmware_rev)
 
     @property
     def date_of_manufacture(self):
-        """
-        :return: The PDU date of manufacture
+        """Date of manufacture.
+
+        :return: PDU date of manufacture
         """
         return self._manufacture_date
 
     @property
     def model_number(self):
-        """
-        :return: The PDU model number
+        """Model number.
+
+        :return: PDU model number
         """
         return str(self._model_number)
 
     @property
     def serial_number(self):
-        """
-        :return: The PDU serial number
+        """Serial number.
+
+        :return: PDU serial number
         """
         return str(self._serial_number)
 
     @property
     def num_outlets(self):
-        """l
-        :return: The total number of outlets in the PDU
+        """Number of outlets in the PDU.
+
+        :return: total number of outlets in the PDU
         """
         return int(self._num_outlets)
 
     @property
     def num_switched_outlets(self):
-        """
-        :return: The number of switched outlets in the PDU
+        """Number of switched outlets in the PDU.
+
+        :return: number of switched outlets in the PDU
         """
         return int(self._num_switched_outlets)
 
     @property
     def num_metered_outlets(self):
-        """
-        :return: The number of metered outlets in the PDU
+        """Number of metered outlets in the PDU.
+
+        :return: number of metered outlets in the PDU
         """
         return int(self._num_metered_outlets)
 
     @property
     def max_current(self):
-        """
-        :return: The maximum current for the PDU
+        """Maximum current for the PDU.
+
+        :return: maximum current for the PDU
         """
         return int(self._max_current)
 
     @property
     def voltage(self):
-        """
-        :return: The PDU line voltage
+        """Line voltage of the PDU.
+
+        :return: PDU line voltage
         """
         return int(self._phase_voltage)
 
     @property
     def load_state(self):
-        """
-        Get the load state of the PDU
+        """Load state of the PDU.
+
         :return: one of ['lowLoad', 'normal', 'nearOverload', overload']
         """
         state = int(self._connection.get(
@@ -245,8 +259,8 @@ class APC(object):
 
     @property
     def current(self):
-        """
-        Get the current utilization of the PDU
+        """The current utilization of the PDU.
+
         :return: current, in amps
         """
         return float(self._connection.get(
@@ -255,8 +269,8 @@ class APC(object):
 
     @property
     def power(self):
-        """
-        Get the power utilization of the PDU
+        """The power utilization of the PDU.
+
         :return: power, in kW
         """
         return float(self._connection.get(
@@ -265,7 +279,8 @@ class APC(object):
 
     @property
     def is_sensor_present(self):
-        """
+        """Determine if a sensor is present on the PDU.
+
         :return: Is the sensor present?
         """
         state = self._connection.get(
@@ -274,8 +289,9 @@ class APC(object):
 
     @property
     def sensor_name(self):
-        """
-        :return: The name of the sensor
+        """Name of the sensor.
+
+        :return: name of the sensor
         """
         if self.is_sensor_present():
             return str(self._connection.get(self._get_query_string(
@@ -284,20 +300,21 @@ class APC(object):
 
     @sensor_name.setter
     def _set_sensor_name(self, name):
-        """
-        :param name: The name of the sensor
+        """Name of the sensor.
+
+        :param name: name of the sensor
         :return:
         """
         if self.is_sensor_present():
-            return self._connection.set(
+            self._connection.set(
                 self._get_query_string(self.Q_SENSOR_NAME_RW),
                 name)
-        return None
 
     @property
     def sensor_type(self):
-        """
-        :return: The type of sensor, one of
+        """Type of sensor.
+
+        :return: type of sensor, one of
         ['temperatureOnly', 'temperatureHumidity', 'commsLost', 'notInstalled']
         """
         index = 4
@@ -308,8 +325,9 @@ class APC(object):
 
     @property
     def sensor_comm_status(self):
-        """
-        :return: The communication status of the sensor
+        """Communication status of the sensor.
+
+        :return: communication status of the sensor
         """
         index = 1
         if self.is_sensor_present():
@@ -319,25 +337,26 @@ class APC(object):
 
     @property
     def use_centigrade(self):
-        """
+        """Select between centigrade and fahrenheit.
 
-        :return:
+        :return: using centigrade or not
         """
         return self._use_centigrade
 
     @use_centigrade.setter
     def _set_use_centigrade(self, value):
-        """
+        """Select between centigrade and fahrenheit.
 
-        :param value:
+        :param value: use centrigrade or not
         :return:
         """
         self._use_centigrade = value
 
     @property
     def temperature(self):
-        """
-        :return: The temperature, in Fahrenheit
+        """Temperature.
+
+        :return: temperature
         """
         if self.sensor_supports_temperature:
             if self._use_centigrade:
@@ -350,8 +369,9 @@ class APC(object):
 
     @property
     def humidity(self):
-        """
-        :return: The relative humidity
+        """Relative humidity.
+
+        :return: relative humidity
         """
         if self.sensor_supports_humidity:
             return float(self._connection.get(self._get_query_string(
@@ -360,7 +380,8 @@ class APC(object):
 
     @property
     def temperature_status(self):
-        """
+        """Determine the status of the temperature sensor.
+
         :return: The status of the temperature sensor
         """
         index = 1
@@ -371,8 +392,9 @@ class APC(object):
 
     @property
     def humidity_status(self):
-        """
-        :return: The status of the humidity sensor
+        """Determine the status of the humidity sensor.
+
+        :return: status of the humidity sensor
         """
         index = 1
         if self.sensor_supports_humidity:
@@ -381,10 +403,10 @@ class APC(object):
         return self.SENSOR_STATUS_TYPES[index]
 
     def get_outlet_name(self, outlet):
-        """
-        Get the name of an outlet in the PDU
-        :param outlet: The outlet number
-        :return: The name of the outlet
+        """Name of an outlet in the PDU.
+
+        :param outlet: outlet number
+        :return: name of the outlet
         """
         if 1 <= outlet <= self._num_outlets:
             return str(self._connection.get(self._get_query_string(
@@ -393,10 +415,10 @@ class APC(object):
             raise IndexError()
 
     def set_outlet_name(self, outlet, name):
-        """
-        Set the name of an outlet in the PDU
-        :param outlet: The outlet number
-        :param name: The outlet name
+        """Update the name of an outlet in the PDU.
+
+        :param outlet: outlet number
+        :param name: outlet name
         :return:
         """
         if 1 <= outlet <= self._num_outlets:
@@ -407,10 +429,10 @@ class APC(object):
             raise IndexError()
 
     def outlet_status(self, outlet):
-        """
-        Get the status of the outlet in the PDU
-        :param outlet: The outlet number
-        :return: The status of the outlet, one of ['on', 'off']
+        """Determine the status of the outlet in the PDU.
+
+        :param outlet: outlet number
+        :return: status of the outlet, one of ['on', 'off']
         """
         if 1 <= outlet <= self._num_outlets:
             state = self._connection.get(self._get_query_string(
@@ -420,10 +442,10 @@ class APC(object):
             raise IndexError()
 
     def outlet_command(self, outlet, operation):
-        """
-        Set the name of an outlet in the PDU
-        :param outlet: The outlet number
-        :param operation: One of ['on', 'off', 'reboot']
+        """Send command to an outlet in the PDU.
+
+        :param outlet: outlet number
+        :param operation: one of ['on', 'off', 'reboot']
         :return:
         """
         if operation not in ['on', 'off', 'reboot']:
@@ -442,14 +464,16 @@ class APC(object):
 
     @property
     def sensor_supports_temperature(self):
-        """
-        :return: Does the sensor support temperature measurements?
+        """Determine if the sensor supports temperature measurements.
+
+        :return: does the sensor support temperature measurements?
         """
         return self.is_sensor_present() and self.sensor_type.find('temp') > -1
 
     @property
     def sensor_supports_humidity(self):
-        """
-        :return: Does the sensor support relative humidity measurements?
+        """Determine if the sensor supports relative humidity measurements.
+
+        :return: does the sensor support relative humidity measurements?
         """
         return self.is_sensor_present() and self.sensor_type.find('Humid') > -1
