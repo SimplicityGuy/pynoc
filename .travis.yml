@@ -1,7 +1,7 @@
 language: python
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install snmp pip
+  - sudo apt-get -y install snmp pip
   - sudo pip install --upgrade pip pylint flake8 flake8-docstrings pysnmp
 python:
 - '2.7'
