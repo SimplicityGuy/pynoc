@@ -1,5 +1,5 @@
 # Exclude any generated pysnmp MIB stubs
-powernetmib*.mib
+powernet*.mib
 PowerNet-MIB.py
 
 # Backup files
