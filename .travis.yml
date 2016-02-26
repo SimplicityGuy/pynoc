@@ -1,0 +1,15 @@
+language: python
+python:
+- '2.7'
+install:
+- make all
+script:
+- make all
+deploy:
+  provider: pypi
+  user: SimplicityGuy
+  password:
+    secure: WqWPRYl6DQ/URLPd/sKa7JKXwMpeO8G4s6YtZjfr8o7JgeVJz64FdgBULldwAfGG+1YKGq4dOFAuK71nXaQGc3EWErdgtmPnIS3WNNXopUhoIWZKy54Z24ClLaRkS1vCbVrrylNmsNbWxobD5vUK7b0YEYJX8aVLlhsE32odUHHbDhlyfFtGVzO6ZZy4VOB2YdYnoKmP5oo2RlCJBvCLz1Aa+zUndrpLAUNMSzZeofL0b8C+dBFKd+ECk4zNVjAm2pqnninxA9eEPwyhI442oFaGhyky5TliQaCFCOqfWMKkqnWYMCsnmf11bip6DOcnO+dEpRkX9VLvK0yvcQs15klsPLyo0Hvhmep7S8+V/dEb/qQ5ZJC6eGLPyl01nvZxfjh7/BzrVGVSF/9dhW6yIQsWE3ReYfGBO2viF2YbMaKVeu8NHe53lfQ8NlndbbtnXAOZhI1PMCvc+vi+2sP1EtVjSOk5U0+y5Q6hKNQoaB3JxvrbEeC/XArleGSpLyrIJiVYyFEpWyisp/H0Lpu5R7Tae9xxqC1FaUh0RUgF1dSE7bAjNF/o5YXksuWDVfmaNs2F0j1cwAJOmaC627lxASxDq/J89Rn/5RjBRlUqRgRkWmnW3xCmgx5ONOAflf8sLkbzZ5sEyVFN0k00WQ3/QGQ2zT0AiHLRGBEHFoYp2dE=
+  on:
+    tags: true
+    branch: master

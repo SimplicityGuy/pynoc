@@ -25,7 +25,8 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 2.7',
-        'Topic :: Instrument Control',
+        'Topic :: System :: Hardware',
+        'Topic :: System :: Networking',
     ],
 
     keywords=['instrument', 'switch', 'pdu', 'Cisco', 'APC', 'network gear'],
