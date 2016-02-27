@@ -1,20 +1,20 @@
 language: python
 python:
-  - '2.7'
+- '2.7'
 sudo: required
 dist: trusty
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get -y install snmp python-pip python-pysnmp4
+- sudo apt-get -qq update
+- sudo apt-get -y install snmp python-pip python-pysnmp4
 install:
-  - pip install --upgrade pip setuptools flake8 flake8-docstrings
+- pip install --upgrade pip setuptools flake8 flake8-docstrings
 script:
-  - make all
+- make all
 deploy:
   provider: pypi
   user: SimplicityGuy
   password:
-    secure: WqWPRYl6DQ/URLPd/sKa7JKXwMpeO8G4s6YtZjfr8o7JgeVJz64FdgBULldwAfGG+1YKGq4dOFAuK71nXaQGc3EWErdgtmPnIS3WNNXopUhoIWZKy54Z24ClLaRkS1vCbVrrylNmsNbWxobD5vUK7b0YEYJX8aVLlhsE32odUHHbDhlyfFtGVzO6ZZy4VOB2YdYnoKmP5oo2RlCJBvCLz1Aa+zUndrpLAUNMSzZeofL0b8C+dBFKd+ECk4zNVjAm2pqnninxA9eEPwyhI442oFaGhyky5TliQaCFCOqfWMKkqnWYMCsnmf11bip6DOcnO+dEpRkX9VLvK0yvcQs15klsPLyo0Hvhmep7S8+V/dEb/qQ5ZJC6eGLPyl01nvZxfjh7/BzrVGVSF/9dhW6yIQsWE3ReYfGBO2viF2YbMaKVeu8NHe53lfQ8NlndbbtnXAOZhI1PMCvc+vi+2sP1EtVjSOk5U0+y5Q6hKNQoaB3JxvrbEeC/XArleGSpLyrIJiVYyFEpWyisp/H0Lpu5R7Tae9xxqC1FaUh0RUgF1dSE7bAjNF/o5YXksuWDVfmaNs2F0j1cwAJOmaC627lxASxDq/J89Rn/5RjBRlUqRgRkWmnW3xCmgx5ONOAflf8sLkbzZ5sEyVFN0k00WQ3/QGQ2zT0AiHLRGBEHFoYp2dE=
+    secure: OzpLy+xBdaEmXSsKuu6Wtlhf5/mRytKMKzaGY/EklLIUs7EzXqbcvrbxiGRWsgf8XtiNIHmA2ekDYvBxZFBU+YQ1rBUvrdVqynv6V2XbkbPAdcyDl3bB4ZdaM7Eh7/HkGLc1atgyZFdDzlo2M7of6grY0ZzEjYJExlzxdRbhAmQO472gVMT6YrQQwHEI9ZHun+9iO0eF7Zp1yQXUs7IRFIJBSWHqid9U77geYTA2Ig+UZaTLUxM0Eun3FRX4pmqADtf8UhLaLVOcr7G7jQqETCp8MinANB9DWOLHRABnuq9V6M+DqVQB5un4p6T8+qt9+aXdAVqdeob8cybv/3SQTZUJkM/ngU8q0WEqS3rHAPG3OqOoLFfKcVKC3keycz82x4E7mjBVgaJPqo5v0+D3s28SPgmAQ+tDUw5p5BNMDnDmOaYDlji6ELUMEIMPBZhl1zULpsrU5OYJlhAXtHuLFtudtzL5SRlS13/4w5T9EprnpIlXP6Ea+qP4nVKbybuu8264nVw+cljkP2ur30UKdppm04GhdDWXO9wY4gRw8UqOYjZcCDtd//R9oU13mx/mZOXuD/A6Aq1YIn/n3G2zipq5ayztlavJahPmskmMl/QhgXPhUMYL4AkQKjWDhR5nz4R6R3waH5c8NeueW6PKb0NKIBUPKeAIAm2ohd0aG9c=
   on:
     tags: true
     branch: master
