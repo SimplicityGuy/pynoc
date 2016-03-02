@@ -1,5 +1,6 @@
 """Cisco Switch control object."""
 
+import logging
 from netaddr import EUI, mac_unix_expanded
 from paramiko import SSHClient, AutoAddPolicy
 
@@ -50,6 +51,10 @@ class CiscoSwitch(object):
         self._enable_needed = False
         self._ready = False
 
+        self._logger = logging.getLogger('pynoc.CiscoSwitch')
+        self._logger.addHandler(logging.NullHandler())
+        self._logger.setLevel(logging.DEBUG)
+
     def connect(self):
         """Connect to the switch.
 
@@ -90,7 +95,8 @@ class CiscoSwitch(object):
             self._send_command(self.CMD_ENABLE,
                                self.CMD_ENABLE_SIGNALS)
             self._send_command(password,
-                               self.CMD_GENERIC_SIGNALS)
+                               self.CMD_GENERIC_SIGNALS,
+                               log=False)
             self._ready = True
 
     def set_terminal_length(self):
@@ -201,20 +207,27 @@ class CiscoSwitch(object):
 
         return output
 
-    def _send_command(self, command, signals):
+    def _send_command(self, command, signals, log=True):
         """Send a command to the SSH shell.
 
         Sends a command to the SSH shell and waits for the signals to arrive.
 
         :param command: command to send
         :param signals: signals to wait for
+        :param log: specifies if this command should be logged
         :return: output of the command
         """
-        self._shell.send(command + '\n')
+        send_command = command + '\n'
+        if log:
+            self._logger.info('Sending command: %s', send_command)
+        self._shell.send(send_command)
         read_buffer = ''
 
         while not any(read_buffer.find(signal) > -1 for signal in signals):
             read_buffer += self._shell.recv(1024)
+
+        if log:
+            self._logger.debug('Received output: %s', read_buffer)
 
         return read_buffer
 
