@@ -32,4 +32,4 @@ build:
 
 all: clean mib check test docs build
 
-.PHONY: clean check test
+.PHONY: clean check test docs
