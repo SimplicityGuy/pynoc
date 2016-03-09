@@ -42,13 +42,11 @@ setup(
                     'pylint',
                     'sphinx',
                     'nose',
-                    'nosexcover',
-                    'mock', },
+                    'nosexcover', },
 
     test_suite='nose.collector',
     tests_require=['nose',
-                   'nosexcover',
-                   'mock', ],
+                   'nosexcover', ],
 
     package_data={
         'pynoc': [],
