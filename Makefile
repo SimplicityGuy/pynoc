@@ -18,7 +18,7 @@ mib:
 
 check: mib
 	python setup.py check --strict --metadata --verbose
-	python setup.py lint --lint-output="pylint.html"
+	python setup.py lint
 	python setup.py flake8
 
 test: check
