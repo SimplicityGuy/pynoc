@@ -42,7 +42,11 @@ setup(
                     'pylint',
                     'sphinx',
                     'nose',
-                    'nosexcover', },
+                    'nosexcover',
+                    'pysnmp',
+                    'snmpy',
+                    'paramiko',
+                    'netaddr', },
 
     test_suite='nose.collector',
     tests_require=['nose',
