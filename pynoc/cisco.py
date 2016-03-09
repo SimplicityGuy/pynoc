@@ -202,7 +202,9 @@ class CiscoSwitch(object):
 
         if any(lower.find(port) == 0 for port in self.PORT_NOTATION.keys()):
             for item in self.PORT_NOTATION.items():
-                output = lower.replace(item[0], item[1])
+                if lower.startswith(item[0]):
+                    output = lower.replace(item[0], item[1])
+                    break
 
         return output
 
