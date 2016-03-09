@@ -16,20 +16,22 @@ mib:
 	sed -i '16 a # ----------------------------------------------------------------------------' PowerNet-MIB.py
 	mv PowerNet-MIB.py pynoc/
 
-check:
+check: mib
 	python setup.py check --strict --metadata --verbose
-	python setup.py lint --lint-output="pylint.html"
+	python setup.py lint
 	python setup.py flake8
 
-test:
-	python setup.py nosetests --verbosity=2
+test: check
+	python setup.py nosetests
 
 docs:
 	python setup.py build_sphinx --fresh-env --all-files --build-dir docs/_build --config-dir docs --builder html --verbose
 
-build:
+build: docs
 	python setup.py sdist bdist_wheel --dist-dir dist --verbose
 
-all: clean mib check test docs build
+all: clean mib check docs build
 
-.PHONY: clean check test
+allwithtests: all test
+
+.PHONY: clean check test docs

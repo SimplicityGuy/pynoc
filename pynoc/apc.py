@@ -136,9 +136,8 @@ class APC(object):
 
         self._use_centigrade = False
 
-        self._logger = logging.getLogger('pynoc.APC')
+        self._logger = logging.getLogger(__name__)
         self._logger.addHandler(logging.NullHandler())
-        self._logger.setLevel(logging.DEBUG)
 
     @property
     def host(self):
@@ -329,7 +328,7 @@ class APC(object):
         :return: name of the sensor
         """
         name = None
-        if self.is_sensor_present():
+        if self.is_sensor_present:
             name = str(self._connection.get(self._get_query_string(
                 self.Q_SENSOR_NAME)))
         self._logger.info('Sensor name: %s', name)
@@ -342,7 +341,7 @@ class APC(object):
         :param name: name of the sensor
         :return:
         """
-        if self.is_sensor_present():
+        if self.is_sensor_present:
             self._connection.set(
                 self._get_query_string(self.Q_SENSOR_NAME_RW),
                 name)
@@ -356,7 +355,7 @@ class APC(object):
         ['temperatureOnly', 'temperatureHumidity', 'commsLost', 'notInstalled']
         """
         index = 4
-        if self.is_sensor_present():
+        if self.is_sensor_present:
             index = int(self._connection.get(self._get_query_string(
                 self.Q_SENSOR_TYPE)))
         self._logger.info('Sensor type: %s', self.SENSOR_TYPES[index])
@@ -369,7 +368,7 @@ class APC(object):
         :return: communication status of the sensor
         """
         index = 1
-        if self.is_sensor_present():
+        if self.is_sensor_present:
             index = int(self._connection.get(self._get_query_string(
                 self.Q_SENSOR_COMM_STATUS)))
         self._logger.info('Sensor communication status: %s',
@@ -386,7 +385,7 @@ class APC(object):
         return self._use_centigrade
 
     @use_centigrade.setter
-    def _set_use_centigrade(self, value):
+    def use_centigrade(self, value):
         """Select between centigrade and fahrenheit.
 
         :param value: use centrigrade or not
@@ -530,7 +529,7 @@ class APC(object):
 
         :return: does the sensor support temperature measurements?
         """
-        return self.is_sensor_present() and self.sensor_type.find('temp') > -1
+        return self.is_sensor_present and self.sensor_type.find('temp') > -1
 
     @property
     def sensor_supports_humidity(self):
@@ -538,4 +537,4 @@ class APC(object):
 
         :return: does the sensor support relative humidity measurements?
         """
-        return self.is_sensor_present() and self.sensor_type.find('Humid') > -1
+        return self.is_sensor_present and self.sensor_type.find('Humid') > -1

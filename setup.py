@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pynoc',
-    version='1.0.2',
+    version='1.1.0',
 
     description='Network Operation Center gear',
     long_description='Python package to handle interact with various '
@@ -43,12 +43,14 @@ setup(
                     'sphinx',
                     'nose',
                     'nosexcover',
-                    'mock', },
+                    'pysnmp',
+                    'snmpy',
+                    'paramiko',
+                    'netaddr', },
 
     test_suite='nose.collector',
     tests_require=['nose',
-                   'nosexcover',
-                   'mock', ],
+                   'nosexcover', ],
 
     package_data={
         'pynoc': [],

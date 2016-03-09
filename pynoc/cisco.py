@@ -51,9 +51,8 @@ class CiscoSwitch(object):
         self._enable_needed = False
         self._ready = False
 
-        self._logger = logging.getLogger('pynoc.CiscoSwitch')
+        self._logger = logging.getLogger(__name__)
         self._logger.addHandler(logging.NullHandler())
-        self._logger.setLevel(logging.DEBUG)
 
     def connect(self):
         """Connect to the switch.
@@ -203,7 +202,9 @@ class CiscoSwitch(object):
 
         if any(lower.find(port) == 0 for port in self.PORT_NOTATION.keys()):
             for item in self.PORT_NOTATION.items():
-                output = lower.replace(item[0], item[1])
+                if lower.startswith(item[0]):
+                    output = lower.replace(item[0], item[1])
+                    break
 
         return output
 
