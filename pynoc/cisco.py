@@ -51,9 +51,8 @@ class CiscoSwitch(object):
         self._enable_needed = False
         self._ready = False
 
-        self._logger = logging.getLogger('pynoc.CiscoSwitch')
+        self._logger = logging.getLogger(__name__)
         self._logger.addHandler(logging.NullHandler())
-        self._logger.setLevel(logging.DEBUG)
 
     def connect(self):
         """Connect to the switch.

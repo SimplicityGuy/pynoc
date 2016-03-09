@@ -136,9 +136,8 @@ class APC(object):
 
         self._use_centigrade = False
 
-        self._logger = logging.getLogger('pynoc.APC')
+        self._logger = logging.getLogger(__name__)
         self._logger.addHandler(logging.NullHandler())
-        self._logger.setLevel(logging.DEBUG)
 
     @property
     def host(self):
