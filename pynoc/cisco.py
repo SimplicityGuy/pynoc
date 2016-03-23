@@ -72,6 +72,8 @@ class CiscoSwitch(object):
         if output.find('>') > 0:
             self._enable_needed = True
             self._ready = False
+        else:
+            self.set_terminal_length()
 
     def disconnect(self):
         """Disconnect from the switch.
@@ -97,6 +99,7 @@ class CiscoSwitch(object):
                                self.CMD_GENERIC_SIGNALS,
                                log=False)
             self._ready = True
+            self.set_terminal_length()
 
     def set_terminal_length(self):
         """Set terminal length.
