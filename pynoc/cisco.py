@@ -8,11 +8,16 @@ from paramiko import SSHClient, AutoAddPolicy
 class CiscoSwitch(object):
     """Cisco switch control."""
 
+    MAX_COMMAND_READ = 16
+
     CMD_LOGIN_SIGNALS = ['>', '#']
     CMD_GENERIC_SIGNALS = ['#']
 
     CMD_ENABLE = 'enable'
     CMD_ENABLE_SIGNALS = ['Password']
+
+    CMD_VERSION = 'sh version'
+    CMD_VERSION_SIGNALS = ['BOOTLDR']
 
     CMD_TERMINAL_LENGTH = 'terminal length 0'
 
@@ -44,6 +49,7 @@ class CiscoSwitch(object):
         :return: CiscoSwitch object
         """
         self._host = hostname_or_ip_address
+        self._version = None
         self._username = username
         self._password = password
         self._client = None
@@ -72,6 +78,8 @@ class CiscoSwitch(object):
         if output.find('>') > 0:
             self._enable_needed = True
             self._ready = False
+        else:
+            self.set_terminal_length()
 
     def disconnect(self):
         """Disconnect from the switch.
@@ -97,6 +105,7 @@ class CiscoSwitch(object):
                                self.CMD_GENERIC_SIGNALS,
                                log=False)
             self._ready = True
+            self.set_terminal_length()
 
     def set_terminal_length(self):
         """Set terminal length.
@@ -170,6 +179,19 @@ class CiscoSwitch(object):
                                self.CMD_GENERIC_SIGNALS)
 
     @property
+    def version(self):
+        """The Cisco IOS version.
+
+        :return: The Cisco IOS version.
+        """
+        if self._version is None:
+            if self._ready:
+                output = self._send_command(self.CMD_VERSION,
+                                            self.CMD_VERSION_SIGNALS)
+                self._version = self._parse_version_output(output)
+        return self._version
+
+    @property
     def host(self):
         """The IP address or hostname of the switch.
 
@@ -186,7 +208,7 @@ class CiscoSwitch(object):
         return self._shell is not None
 
     def _shorthand_port_notation(self, port):
-        """Shothand port notation.
+        """Shorthand port notation.
 
         Takes a port name, such as Gi1/0/48 or GigabitEthernet1/0/48 and
         returns the shorthand notation.
@@ -221,16 +243,46 @@ class CiscoSwitch(object):
         send_command = command + '\n'
         if log:
             self._logger.info('Sending command: %s', send_command)
-        self._shell.send(send_command)
-        read_buffer = ''
 
+        self._shell.send(send_command)
+
+        read_buffer = ''
         while not any(read_buffer.find(signal) > -1 for signal in signals):
-            read_buffer += self._shell.recv(1024)
+            read_buffer += self._shell.recv(self.MAX_COMMAND_READ)
 
         if log:
             self._logger.debug('Received output: %s', read_buffer)
 
+        # Manually flush the rest of the buffer.
+        while self._shell.recv_ready():
+            self._shell.recv(self.MAX_COMMAND_READ)
+
         return read_buffer
+
+    @staticmethod
+    def _parse_version_output(output):
+        """Version parsing.
+
+        :param output: the output of the command
+        :return: version string
+        """
+        lines = [line.strip() for line in output.splitlines()]
+        version = ''
+        search = True
+        while len(lines) > 0 and search:
+            line = lines.pop()
+
+            if line.find('Cisco IOS') < 0:
+                continue
+
+            version_info = line.split(',')
+
+            if len(version_info) > 1:
+                version = version_info[2].strip()
+                version = version[8:]
+                search = False
+
+        return version
 
     def _parse_mac_address_table_output(self, output, ignore_port=None):
         """Mac Address Table parsing.
