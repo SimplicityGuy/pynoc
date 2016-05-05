@@ -1,6 +1,7 @@
 """Cisco Switch control object."""
 
 import logging
+
 from netaddr import EUI, mac_unix_expanded
 from paramiko import SSHClient, AutoAddPolicy
 
@@ -102,8 +103,7 @@ class CiscoSwitch(object):
         :return:
         """
         if self.connected and self._enable_needed:
-            self._send_command(self.CMD_ENABLE,
-                               self.CMD_ENABLE_SIGNALS)
+            self._send_command(self.CMD_ENABLE, self.CMD_ENABLE_SIGNALS)
             self._send_command(password,
                                self.CMD_GENERIC_SIGNALS,
                                log=False)
@@ -155,12 +155,13 @@ class CiscoSwitch(object):
             return
 
         port = self._shorthand_port_notation(port)
-        self._send_command(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
-                           self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_POWER_ON,
-                           self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_END, self.CMD_GENERIC_SIGNALS)
+        cmds = [(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_CONFIGURE_INTERFACE.format(port),
+                 self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_POWER_ON, self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_END, self.CMD_GENERIC_SIGNALS)
+                ]
+        self._send_commands(cmds)
 
     def poe_off(self, port):
         """Disable a port for POE.
@@ -172,12 +173,12 @@ class CiscoSwitch(object):
             return
 
         port = self._shorthand_port_notation(port)
-        self._send_command(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
-                           self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_POWER_OFF,
-                           self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_END, self.CMD_GENERIC_SIGNALS)
+        cmds = [(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_CONFIGURE_INTERFACE.format(port),
+                 self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_POWER_OFF, self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_END, self.CMD_GENERIC_SIGNALS)]
+        self._send_commands(cmds)
 
     def change_vlan(self, port, vlan):
         """Change the VLAN assignment on a port.
@@ -190,14 +191,13 @@ class CiscoSwitch(object):
             return
 
         port = self._shorthand_port_notation(port)
-        self._send_command(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
-                           self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_VLAN_MODE_ACCESS,
-                           self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_VLAN_SET.format(vlan),
-                           self.CMD_CONFIGURE_SIGNALS)
-        self._send_command(self.CMD_END, self.CMD_GENERIC_SIGNALS)
+        cmds = [(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_CONFIGURE_INTERFACE.format(port),
+                 self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_VLAN_MODE_ACCESS, self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_VLAN_SET.format(vlan), self.CMD_CONFIGURE_SIGNALS),
+                (self.CMD_END, self.CMD_GENERIC_SIGNALS)]
+        self._send_commands(cmds)
 
     @property
     def version(self):
@@ -250,6 +250,14 @@ class CiscoSwitch(object):
                     break
 
         return output
+
+    def _send_commands(self, commands):
+        """Sends a list of commands to the SSH shell.
+
+        :param commands: list of commands
+        """
+        for command in commands:
+            self._send_command(command)
 
     def _send_command(self, command, signals, log=True):
         """Send a command to the SSH shell.
