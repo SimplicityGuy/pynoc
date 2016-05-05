@@ -89,7 +89,7 @@ class CiscoSwitch(object):
 
         :return:
         """
-        if self._client:
+        if self._client is not None:
             self._client.close()
             self._client = None
             self._shell = None
@@ -115,9 +115,10 @@ class CiscoSwitch(object):
 
         :return:
         """
-        if self._ready:
-            self._send_command(self.CMD_TERMINAL_LENGTH,
-                               self.CMD_GENERIC_SIGNALS)
+        if not self._ready:
+            return
+
+        self._send_command(self.CMD_TERMINAL_LENGTH, self.CMD_GENERIC_SIGNALS)
 
     def ipdt(self):
         """IP Device Tracking (IPDT) information.
@@ -136,12 +137,13 @@ class CiscoSwitch(object):
         :param ignore_port: port to ignore, e.g. Gi1/0/48
         :return: ARP information
         """
-        if self._ready:
-            output = self._send_command(self.CMD_MAC_ADDRESS_TABLE,
-                                        self.CMD_MAC_ADDRESS_TABLE_SIGNALS)
-            return self._parse_mac_address_table_output(
-                output, ignore_port=ignore_port)
-        return None
+        if not self._ready:
+            return None
+
+        output = self._send_command(self.CMD_MAC_ADDRESS_TABLE,
+                                    self.CMD_MAC_ADDRESS_TABLE_SIGNALS)
+        return self._parse_mac_address_table_output(output,
+                                                    ignore_port=ignore_port)
 
     def poe_on(self, port):
         """Enable a port for POE.
@@ -149,16 +151,16 @@ class CiscoSwitch(object):
         :param port: port to enable POE on, e.g. Gi1/0/1
         :return:
         """
-        if self._ready:
-            port = self._shorthand_port_notation(port)
-            self._send_command(self.CMD_CONFIGURE,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_POWER_ON,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_END,
-                               self.CMD_GENERIC_SIGNALS)
+        if not self._ready:
+            return
+
+        port = self._shorthand_port_notation(port)
+        self._send_command(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
+                           self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_POWER_ON,
+                           self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_END, self.CMD_GENERIC_SIGNALS)
 
     def poe_off(self, port):
         """Disable a port for POE.
@@ -166,16 +168,16 @@ class CiscoSwitch(object):
         :param port: port to disable POE on, e.g. Gi1/0/1
         :return:
         """
-        if self._ready:
-            port = self._shorthand_port_notation(port)
-            self._send_command(self.CMD_CONFIGURE,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_POWER_OFF,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_END,
-                               self.CMD_GENERIC_SIGNALS)
+        if not self._ready:
+            return
+
+        port = self._shorthand_port_notation(port)
+        self._send_command(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
+                           self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_POWER_OFF,
+                           self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_END, self.CMD_GENERIC_SIGNALS)
 
     def change_vlan(self, port, vlan):
         """Change the VLAN assignment on a port.
@@ -184,18 +186,18 @@ class CiscoSwitch(object):
         :param vlan: VLAN id
         :return:
         """
-        if self._ready:
-            port = self._shorthand_port_notation(port)
-            self._send_command(self.CMD_CONFIGURE,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_VLAN_MODE_ACCESS,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_VLAN_SET.format(vlan),
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_END,
-                               self.CMD_GENERIC_SIGNALS)
+        if not self._ready:
+            return
+
+        port = self._shorthand_port_notation(port)
+        self._send_command(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
+                           self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_VLAN_MODE_ACCESS,
+                           self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_VLAN_SET.format(vlan),
+                           self.CMD_CONFIGURE_SIGNALS)
+        self._send_command(self.CMD_END, self.CMD_GENERIC_SIGNALS)
 
     @property
     def version(self):
