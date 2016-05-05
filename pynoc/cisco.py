@@ -34,6 +34,9 @@ class CiscoSwitch(object):
     CMD_POWER_OFF = 'power inline never'
     CMD_POWER_ON = 'power inline auto'
 
+    CMD_VLAN_MODE_ACCESS = 'switchport mode access'
+    CMD_VLAN_SET = 'switchport access vlan {0}'
+
     CMD_EXIT = 'exit'
 
     PORT_NOTATION = {'fastethernet': 'Fa',
@@ -172,6 +175,28 @@ class CiscoSwitch(object):
             self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
                                self.CMD_CONFIGURE_SIGNALS)
             self._send_command(self.CMD_POWER_OFF,
+                               self.CMD_CONFIGURE_SIGNALS)
+            self._send_command(self.CMD_EXIT,
+                               self.CMD_CONFIGURE_SIGNALS)
+            self._send_command(self.CMD_EXIT,
+                               self.CMD_GENERIC_SIGNALS)
+
+    def change_vlan(self, port, vlan):
+        """Change the VLAN assignment on a port.
+
+        :param port: port to change VLAN assignment on, e.g. Gi1/0/1
+        :param vlan: VLAN id
+        :return:
+        """
+        if self._ready:
+            port = self._shorthand_port_notation(port)
+            self._send_command(self.CMD_CONFIGURE,
+                               self.CMD_CONFIGURE_SIGNALS)
+            self._send_command(self.CMD_CONFIGURE_INTERFACE.format(port),
+                               self.CMD_CONFIGURE_SIGNALS)
+            self._send_command(self.CMD_VLAN_MODE_ACCESS,
+                               self.CMD_CONFIGURE_SIGNALS)
+            self._send_command(self.CMD_VLAN_SET.format(vlan),
                                self.CMD_CONFIGURE_SIGNALS)
             self._send_command(self.CMD_EXIT,
                                self.CMD_CONFIGURE_SIGNALS)
