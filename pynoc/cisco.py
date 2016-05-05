@@ -37,7 +37,7 @@ class CiscoSwitch(object):
     CMD_VLAN_MODE_ACCESS = 'switchport mode access'
     CMD_VLAN_SET = 'switchport access vlan {0}'
 
-    CMD_EXIT = 'exit'
+    CMD_END = 'end'
 
     PORT_NOTATION = {'fastethernet': 'Fa',
                      'gigabitethernet': 'Gi',
@@ -157,9 +157,7 @@ class CiscoSwitch(object):
                                self.CMD_CONFIGURE_SIGNALS)
             self._send_command(self.CMD_POWER_ON,
                                self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_EXIT,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_EXIT,
+            self._send_command(self.CMD_END,
                                self.CMD_GENERIC_SIGNALS)
 
     def poe_off(self, port):
@@ -176,9 +174,7 @@ class CiscoSwitch(object):
                                self.CMD_CONFIGURE_SIGNALS)
             self._send_command(self.CMD_POWER_OFF,
                                self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_EXIT,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_EXIT,
+            self._send_command(self.CMD_END,
                                self.CMD_GENERIC_SIGNALS)
 
     def change_vlan(self, port, vlan):
@@ -198,9 +194,7 @@ class CiscoSwitch(object):
                                self.CMD_CONFIGURE_SIGNALS)
             self._send_command(self.CMD_VLAN_SET.format(vlan),
                                self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_EXIT,
-                               self.CMD_CONFIGURE_SIGNALS)
-            self._send_command(self.CMD_EXIT,
+            self._send_command(self.CMD_END,
                                self.CMD_GENERIC_SIGNALS)
 
     @property
