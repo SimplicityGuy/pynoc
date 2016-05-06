@@ -159,8 +159,7 @@ class CiscoSwitch(object):
                 (self.CMD_CONFIGURE_INTERFACE.format(port),
                  self.CMD_CONFIGURE_SIGNALS),
                 (self.CMD_POWER_ON, self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_END, self.CMD_GENERIC_SIGNALS)
-                ]
+                (self.CMD_END, self.CMD_GENERIC_SIGNALS)]
         self._send_commands(cmds)
 
     def poe_off(self, port):
@@ -252,12 +251,12 @@ class CiscoSwitch(object):
         return output
 
     def _send_commands(self, commands):
-        """Sends a list of commands to the SSH shell.
+        """Send a list of commands to the SSH shell.
 
         :param commands: list of commands
         """
         for command in commands:
-            self._send_command(command)
+            self._send_command(command[0], command[1])
 
     def _send_command(self, command, signals, log=True):
         """Send a command to the SSH shell.
