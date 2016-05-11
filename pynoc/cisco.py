@@ -275,8 +275,7 @@ class CiscoSwitch(object):
         self._shell.send(send_command)
 
         read_buffer = ''
-        while not any(read_buffer.find(signal) > -1 for signal in signals) \
-                and self._shell.recv_ready():
+        while not any(read_buffer.find(signal) > -1 for signal in signals):
             read_buffer += self._shell.recv(self.MAX_COMMAND_READ)
 
         if log:
