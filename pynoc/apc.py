@@ -59,17 +59,40 @@ class APC(object):
     Q_OUTLET_COMMAND_RW = 'rPDU2OutletSwitchedControlCommand.{0}'
 
     # Lookups
-    LOAD_STATES = ['', 'lowLoad', 'normal', 'nearOverload', 'overload']
+    LOAD_STATES = [
+        '',
+        'lowLoad',
+        'normal',
+        'nearOverload',
+        'overload',
+    ]
     SENSOR_TYPES = [
-        '', 'temperatureOnly', 'temperatureHumidity', 'commsLost',
-        'notInstalled'
+        '',
+        'temperatureOnly',
+        'temperatureHumidity',
+        'commsLost',
+        'notInstalled',
     ]
-    COMM_STATUS_TYPES = ['', 'notInstalled', 'commsOK', 'commsLost']
+    COMM_STATUS_TYPES = [
+        '',
+        'notInstalled',
+        'commsOK',
+        'commsLost',
+    ]
     SENSOR_STATUS_TYPES = [
-        '', 'notPresent', 'belowMin', 'belowLow', 'normal', 'aboveHigh',
-        'aboveMax'
+        '',
+        'notPresent',
+        'belowMin',
+        'belowLow',
+        'normal',
+        'aboveHigh',
+        'aboveMax',
     ]
-    OUTLET_STATUS_TYPES = ['', 'off', 'on']
+    OUTLET_STATUS_TYPES = [
+        '',
+        'off',
+        'on',
+    ]
 
     def _get_query_string(self, query, param=None):
         """Generate a well-formatted SNMP query string.

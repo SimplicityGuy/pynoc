@@ -40,9 +40,11 @@ class CiscoSwitch(object):
 
     CMD_END = 'end'
 
-    PORT_NOTATION = {'fastethernet': 'Fa',
-                     'gigabitethernet': 'Gi',
-                     'tengigabitethernet': 'Ten'}
+    PORT_NOTATION = {
+        'fastethernet': 'Fa',
+        'gigabitethernet': 'Gi',
+        'tengigabitethernet': 'Ten',
+    }
 
     def __init__(self, hostname_or_ip_address, username, password):
         """Initialize the CiscoSwitch object.
@@ -104,9 +106,9 @@ class CiscoSwitch(object):
         """
         if self.connected and self._enable_needed:
             self._send_command(self.CMD_ENABLE, self.CMD_ENABLE_SIGNALS)
-            self._send_command(password,
-                               self.CMD_GENERIC_SIGNALS,
-                               log=False)
+            self._send_command(
+                password, self.CMD_GENERIC_SIGNALS, log=False
+            )
             self._ready = True
             self.set_terminal_length()
 
@@ -126,8 +128,7 @@ class CiscoSwitch(object):
         :return: IPDT information
         """
         if self._ready:
-            output = self._send_command(self.CMD_IPDT,
-                                        self.CMD_IPDT_SIGNALS)
+            output = self._send_command(self.CMD_IPDT, self.CMD_IPDT_SIGNALS)
             return CiscoSwitch._parse_ipdt_output(output)
         return None
 
@@ -140,10 +141,12 @@ class CiscoSwitch(object):
         if not self._ready:
             return None
 
-        output = self._send_command(self.CMD_MAC_ADDRESS_TABLE,
-                                    self.CMD_MAC_ADDRESS_TABLE_SIGNALS)
-        return self._parse_mac_address_table_output(output,
-                                                    ignore_port=ignore_port)
+        output = self._send_command(
+            self.CMD_MAC_ADDRESS_TABLE, self.CMD_MAC_ADDRESS_TABLE_SIGNALS
+        )
+        return self._parse_mac_address_table_output(
+            output, ignore_port=ignore_port
+        )
 
     def poe_on(self, port):
         """Enable a port for POE.
@@ -155,11 +158,13 @@ class CiscoSwitch(object):
             return
 
         port = self._shorthand_port_notation(port)
-        cmds = [(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_CONFIGURE_INTERFACE.format(port),
-                 self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_POWER_ON, self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_END, self.CMD_GENERIC_SIGNALS)]
+        cmds = [
+            (self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_CONFIGURE_INTERFACE.format(port),
+             self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_POWER_ON, self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_END, self.CMD_GENERIC_SIGNALS)
+        ]
         self._send_commands(cmds)
 
     def poe_off(self, port):
@@ -172,11 +177,13 @@ class CiscoSwitch(object):
             return
 
         port = self._shorthand_port_notation(port)
-        cmds = [(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_CONFIGURE_INTERFACE.format(port),
-                 self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_POWER_OFF, self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_END, self.CMD_GENERIC_SIGNALS)]
+        cmds = [
+            (self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_CONFIGURE_INTERFACE.format(port),
+             self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_POWER_OFF, self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_END, self.CMD_GENERIC_SIGNALS)
+        ]
         self._send_commands(cmds)
 
     def change_vlan(self, port, vlan):
@@ -190,12 +197,14 @@ class CiscoSwitch(object):
             return
 
         port = self._shorthand_port_notation(port)
-        cmds = [(self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_CONFIGURE_INTERFACE.format(port),
-                 self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_VLAN_MODE_ACCESS, self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_VLAN_SET.format(vlan), self.CMD_CONFIGURE_SIGNALS),
-                (self.CMD_END, self.CMD_GENERIC_SIGNALS)]
+        cmds = [
+            (self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_CONFIGURE_INTERFACE.format(port),
+             self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_VLAN_MODE_ACCESS, self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_VLAN_SET.format(vlan), self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_END, self.CMD_GENERIC_SIGNALS)
+        ]
         self._send_commands(cmds)
 
     @property
@@ -206,8 +215,9 @@ class CiscoSwitch(object):
         """
         if self._version is None:
             if self._ready:
-                output = self._send_command(self.CMD_VERSION,
-                                            self.CMD_VERSION_SIGNALS)
+                output = self._send_command(
+                    self.CMD_VERSION, self.CMD_VERSION_SIGNALS
+                )
                 self._version = self._parse_version_output(output)
         return self._version
 
