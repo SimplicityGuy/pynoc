@@ -141,10 +141,9 @@ class APC(object):
         self._firmware_rev = self._connection.get(
             self._get_query_string(self.Q_FIRMWARE_REV)
         )
-        self._manufacture_date = datetime.strptime(str(
-            self._connection.get(
-                self._get_query_string(self.Q_MANUFACTURE_DATE)
-            )), "%m/%d/%Y"
+        self._manufacture_date = datetime.strptime(
+            str(self._connection.get(
+                self._get_query_string(self.Q_MANUFACTURE_DATE))), "%m/%d/%Y"
         )
         self._model_number = self._connection.get(
             self._get_query_string(self.Q_MODEL_NUMBER)
@@ -170,8 +169,8 @@ class APC(object):
         # Phase status (static)
         self._power_factor = 100
         self._current_factor = 10
-        self._phase_voltage = int(self._connection.get(
-            self._get_query_string(self.Q_PHASE_VOLTAGE))
+        self._phase_voltage = int(
+            self._connection.get(self._get_query_string(self.Q_PHASE_VOLTAGE))
         )
 
         self._use_centigrade = False
@@ -647,6 +646,9 @@ class APC(object):
         """
         return self.is_sensor_present and 'humid' in self.sensor_type.lower()
 
+    # pylint: disable=no-self-argument
+    # In order to use this method within the @retry decorator, this method
+    # must be defined as such.
     def __retry_if_not_state(result):
         """Only keep retrying if the state is not what is expected.
 
