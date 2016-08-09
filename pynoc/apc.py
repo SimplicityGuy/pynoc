@@ -3,6 +3,8 @@
 import logging
 from datetime import datetime
 from os import getcwd, path
+
+from retrying import retry, RetryError
 from snmpy import Snmpy
 
 
@@ -13,6 +15,8 @@ class APC(object):
     # pylint: disable=too-many-public-methods
     # This class requires more attributes and public methods to cover the
     # functionality of the device.
+
+    MAX_STOP_DELAY = 15000  # 15 seconds
 
     PREFIX = 'PowerNet-MIB'
 
@@ -504,7 +508,7 @@ class APC(object):
 
         :param outlet: outlet number
         :param operation: one of ['on', 'off', 'reboot']
-        :return:
+        :return: did the operation complete successfully?
         """
         if operation not in ['on', 'off', 'reboot']:
             raise ValueError()
@@ -520,6 +524,18 @@ class APC(object):
             self._connection.set(
                 self._get_query_string(self.Q_OUTLET_COMMAND_RW, outlet),
                 operations[operation])
+
+            try:
+                if operation in ('on', 'reboot'):
+                    success = self.__wait_for_end_state(outlet, 'on')
+                else:
+                    success = self.__wait_for_end_state(outlet, 'off')
+            except RetryError:
+                # If the operation timed out, no determination of the result
+                # can be made.
+                success = False
+
+            return success
         else:
             raise IndexError()
 
@@ -538,3 +554,14 @@ class APC(object):
         :return: does the sensor support relative humidity measurements?
         """
         return self.is_sensor_present and self.sensor_type.find('Humid') > -1
+
+    def __retry_if_not_state(result):
+        """Only keep retrying if the state is not what is expected.
+
+        :return: negation of input
+        """
+        return not result
+
+    @retry(stop_max_delay=MAX_STOP_DELAY, retry_on_result=__retry_if_not_state)
+    def __wait_for_end_state(self, outlet, end_state):
+        return self.outlet_status(outlet) is end_state

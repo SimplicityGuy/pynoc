@@ -33,7 +33,7 @@ setup(
 
     packages=find_packages(exclude=['contrib', 'docs', 'test*']),
 
-    install_requires=['pysnmp', 'snmpy', 'paramiko', 'netaddr'],
+    install_requires=['pysnmp', 'snmpy', 'paramiko', 'netaddr', 'retrying'],
 
     setup_requires={'check-manifest',
                     'setuptools-lint',
@@ -46,7 +46,8 @@ setup(
                     'pysnmp',
                     'snmpy',
                     'paramiko',
-                    'netaddr', },
+                    'netaddr',
+                    'retrying', },
 
     test_suite='nose.collector',
     tests_require=['nose',
