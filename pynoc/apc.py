@@ -17,6 +17,7 @@ class APC(object):
     # functionality of the device.
 
     MAX_STOP_DELAY = 15000  # 15 seconds
+    INTER_RETRY_WAIT = 500  # 0.5 seconds
 
     PREFIX = 'PowerNet-MIB'
 
@@ -97,46 +98,59 @@ class APC(object):
         self._snmp_public_auth = public_community
         self._snmp_private_auth = private_community
 
-        self._connection = Snmpy(self._host,
-                                 self._snmp_public_auth,
-                                 self._snmp_private_auth,
-                                 timeout=1.5,
-                                 retries=2)
+        self._connection = Snmpy(
+            self._host, self._snmp_public_auth, self._snmp_private_auth,
+            timeout=1.5, retries=2
+        )
         self._connection.add_mib_path(getcwd())
         self._connection.add_mib_path(path.dirname(path.abspath(__file__)))
         self._connection.load_mibs(self.PREFIX)
 
         # Generic information (static)
         self._identification = self._connection.get(
-            self._get_query_string(self.Q_NAME))
+            self._get_query_string(self.Q_NAME)
+        )
         self._location = self._connection.get(
-            self._get_query_string(self.Q_LOCATION))
+            self._get_query_string(self.Q_LOCATION)
+        )
         self._hardware_rev = self._connection.get(
-            self._get_query_string(self.Q_HARDWARE_REV))
+            self._get_query_string(self.Q_HARDWARE_REV)
+        )
         self._firmware_rev = self._connection.get(
-            self._get_query_string(self.Q_FIRMWARE_REV))
-        self._manufacture_date = datetime.strptime(str(self._connection.get(
-            self._get_query_string(self.Q_MANUFACTURE_DATE))), "%m/%d/%Y")
+            self._get_query_string(self.Q_FIRMWARE_REV)
+        )
+        self._manufacture_date = datetime.strptime(str(
+            self._connection.get(
+                self._get_query_string(self.Q_MANUFACTURE_DATE)
+            )), "%m/%d/%Y"
+        )
         self._model_number = self._connection.get(
-            self._get_query_string(self.Q_MODEL_NUMBER))
+            self._get_query_string(self.Q_MODEL_NUMBER)
+        )
         self._serial_number = self._connection.get(
-            self._get_query_string(self.Q_SERIAL_NUMBER))
+            self._get_query_string(self.Q_SERIAL_NUMBER)
+        )
 
         # Device status (static)
         self._num_outlets = self._connection.get(
-            self._get_query_string(self.Q_NUM_OUTLETS))
+            self._get_query_string(self.Q_NUM_OUTLETS)
+        )
         self._num_switched_outlets = self._connection.get(
-            self._get_query_string(self.Q_NUM_SWITCHED_OUTLETS))
+            self._get_query_string(self.Q_NUM_SWITCHED_OUTLETS)
+        )
         self._num_metered_outlets = self._connection.get(
-            self._get_query_string(self.Q_NUM_METERED_OUTLETS))
+            self._get_query_string(self.Q_NUM_METERED_OUTLETS)
+        )
         self._max_current = self._connection.get(
-            self._get_query_string(self.Q_MAX_CURRENT_RATING))
+            self._get_query_string(self.Q_MAX_CURRENT_RATING)
+        )
 
         # Phase status (static)
         self._power_factor = 100
         self._current_factor = 10
         self._phase_voltage = int(self._connection.get(
-            self._get_query_string(self.Q_PHASE_VOLTAGE)))
+            self._get_query_string(self.Q_PHASE_VOLTAGE))
+        )
 
         self._use_centigrade = False
 
@@ -205,7 +219,9 @@ class APC(object):
 
         :return: PDU date of manufacture
         """
-        self._logger.info('Date of Manufacre: %s', str(self._manufacture_date))
+        self._logger.info(
+            'Date of Manufacture: %s', str(self._manufacture_date)
+        )
         return self._manufacture_date
 
     @property
@@ -284,8 +300,11 @@ class APC(object):
 
         :return: one of ['lowLoad', 'normal', 'nearOverload', overload']
         """
-        state = int(self._connection.get(
-            self._get_query_string(self.Q_PHASE_LOAD_STATE)))
+        state = int(
+            self._connection.get(
+                self._get_query_string(self.Q_PHASE_LOAD_STATE)
+            )
+        )
         self._logger.info('Load state: %s', self.LOAD_STATES[state])
         return self.LOAD_STATES[state]
 
@@ -295,9 +314,11 @@ class APC(object):
 
         :return: current, in amps
         """
-        current = float(self._connection.get(
-            self._get_query_string(
-                self.Q_PHASE_CURRENT)) / self._current_factor)
+        current = float(
+            self._connection.get(
+                self._get_query_string(self.Q_PHASE_CURRENT)
+            ) / self._current_factor
+        )
         self._logger.info('Current: %.2f', current)
         return current
 
@@ -307,9 +328,10 @@ class APC(object):
 
         :return: power, in kW
         """
-        power = float(self._connection.get(
-            self._get_query_string(
-                self.Q_POWER)) / self._power_factor)
+        power = float(
+            self._connection.get(
+                self._get_query_string(self.Q_POWER)) / self._power_factor
+        )
         self._logger.info('Power: %.2f', power)
         return power
 
@@ -320,7 +342,8 @@ class APC(object):
         :return: Is the sensor present?
         """
         state = self._connection.get(
-            self._get_query_string(self.Q_SENSOR_TYPE))
+            self._get_query_string(self.Q_SENSOR_TYPE)
+        )
         present = 1 < int(state) < 3
         self._logger.info('Sensor present: %s', str(present))
         return present
@@ -333,8 +356,11 @@ class APC(object):
         """
         name = None
         if self.is_sensor_present:
-            name = str(self._connection.get(self._get_query_string(
-                self.Q_SENSOR_NAME)))
+            name = str(
+                self._connection.get(
+                    self._get_query_string(self.Q_SENSOR_NAME)
+                )
+            )
         self._logger.info('Sensor name: %s', name)
         return name
 
@@ -347,8 +373,8 @@ class APC(object):
         """
         if self.is_sensor_present:
             self._connection.set(
-                self._get_query_string(self.Q_SENSOR_NAME_RW),
-                name)
+                self._get_query_string(self.Q_SENSOR_NAME_RW), name
+            )
             self._logger.info('Updating sensor name to: %s', name)
 
     @property
@@ -360,8 +386,11 @@ class APC(object):
         """
         index = 4
         if self.is_sensor_present:
-            index = int(self._connection.get(self._get_query_string(
-                self.Q_SENSOR_TYPE)))
+            index = int(
+                self._connection.get(
+                    self._get_query_string(self.Q_SENSOR_TYPE)
+                )
+            )
         self._logger.info('Sensor type: %s', self.SENSOR_TYPES[index])
         return self.SENSOR_TYPES[index]
 
@@ -373,8 +402,11 @@ class APC(object):
         """
         index = 1
         if self.is_sensor_present:
-            index = int(self._connection.get(self._get_query_string(
-                self.Q_SENSOR_COMM_STATUS)))
+            index = int(
+                self._connection.get(
+                    self._get_query_string(self.Q_SENSOR_COMM_STATUS)
+                )
+            )
         self._logger.info('Sensor communication status: %s',
                           self.SENSOR_STATUS_TYPES[index])
         return self.SENSOR_STATUS_TYPES[index]
@@ -407,11 +439,17 @@ class APC(object):
         temp = 0.00
         if self.sensor_supports_temperature:
             if self._use_centigrade:
-                temp = float(self._connection.get(self._get_query_string(
-                    self.Q_SENSOR_TEMP_C)) / 10)
+                temp = float(
+                    self._connection.get(
+                        self._get_query_string(self.Q_SENSOR_TEMP_C)
+                    ) / 10
+                )
             else:
-                temp = float(self._connection.get(self._get_query_string(
-                    self.Q_SENSOR_TEMP_F)) / 10)
+                temp = float(
+                    self._connection.get(
+                        self._get_query_string(self.Q_SENSOR_TEMP_F)
+                    ) / 10
+                )
         self._logger.info('Temperature: %.2f', temp)
         return temp
 
@@ -423,8 +461,11 @@ class APC(object):
         """
         humid = 0.00
         if self.sensor_supports_humidity:
-            humid = float(self._connection.get(self._get_query_string(
-                self.Q_SENSOR_HUMIDITY)))
+            humid = float(
+                self._connection.get(
+                    self._get_query_string(self.Q_SENSOR_HUMIDITY)
+                )
+            )
         self._logger.info('Relative humidity: %.2f', humid)
         return humid
 
@@ -436,10 +477,12 @@ class APC(object):
         """
         index = 1
         if self.sensor_supports_temperature:
-            index = self._connection.get(self._get_query_string(
-                self.Q_SENSOR_TEMP_STATUS))
-        self._logger.info('Temperature sensor status: %s',
-                          self.SENSOR_STATUS_TYPES[index])
+            index = self._connection.get(
+                self._get_query_string(self.Q_SENSOR_TEMP_STATUS)
+            )
+        self._logger.info(
+            'Temperature sensor status: %s', self.SENSOR_STATUS_TYPES[index]
+        )
         return self.SENSOR_STATUS_TYPES[index]
 
     @property
@@ -450,10 +493,13 @@ class APC(object):
         """
         index = 1
         if self.sensor_supports_humidity:
-            index = self._connection.get(self._get_query_string(
-                self.Q_SENSOR_HUMIDITY_STATUS))
-        self._logger.info('Relative humidity sensor status: %s',
-                          self.SENSOR_STATUS_TYPES[index])
+            index = self._connection.get(
+                self._get_query_string(self.Q_SENSOR_HUMIDITY_STATUS)
+            )
+        self._logger.info(
+            'Relative humidity sensor status: %s',
+            self.SENSOR_STATUS_TYPES[index]
+        )
         return self.SENSOR_STATUS_TYPES[index]
 
     def get_outlet_name(self, outlet):
@@ -463,8 +509,11 @@ class APC(object):
         :return: name of the outlet
         """
         if 1 <= outlet <= self._num_outlets:
-            name = str(self._connection.get(self._get_query_string(
-                self.Q_OUTLET_NAME, outlet)))
+            name = str(
+                self._connection.get(
+                    self._get_query_string(self.Q_OUTLET_NAME, outlet)
+                )
+            )
             self._logger.info('Outlet number %d has name %s', outlet, name)
             return name
         else:
@@ -479,11 +528,11 @@ class APC(object):
         """
         if 1 <= outlet <= self._num_outlets:
             self._connection.set(
-                self._get_query_string(self.Q_OUTLET_NAME_RW, outlet),
-                name)
-            self._logger.info('Updating outlet number %d to new name %s',
-                              outlet,
-                              name)
+                self._get_query_string(self.Q_OUTLET_NAME_RW, outlet), name
+            )
+            self._logger.info(
+                'Updating outlet number %d to new name %s', outlet, name
+            )
         else:
             raise IndexError()
 
@@ -494,11 +543,13 @@ class APC(object):
         :return: status of the outlet, one of ['on', 'off']
         """
         if 1 <= outlet <= self._num_outlets:
-            state = self._connection.get(self._get_query_string(
-                self.Q_OUTLET_STATUS, outlet))
-            self._logger.info('Outlet number %d has status %s',
-                              outlet,
-                              self.OUTLET_STATUS_TYPES[state])
+            state = self._connection.get(
+                self._get_query_string(self.Q_OUTLET_STATUS, outlet)
+            )
+            self._logger.info(
+                'Outlet number %d has status %s', outlet,
+                self.OUTLET_STATUS_TYPES[state]
+            )
             return self.OUTLET_STATUS_TYPES[state]
         else:
             raise IndexError()
@@ -513,23 +564,26 @@ class APC(object):
         if operation not in ['on', 'off', 'reboot']:
             raise ValueError()
 
-        operations = {'on': 1,
-                      'off': 2,
-                      'reboot': 3}
+        operations = {
+            'on': 1,
+            'off': 2,
+            'reboot': 3,
+        }
 
         if 1 <= outlet <= self._num_outlets:
-            self._logger.info('Setting outlet %d to %s state',
-                              outlet,
-                              operation)
+            self._logger.info(
+                'Setting outlet %d to %s state', outlet, operation
+            )
             self._connection.set(
                 self._get_query_string(self.Q_OUTLET_COMMAND_RW, outlet),
-                operations[operation])
+                operations[operation]
+            )
 
             try:
                 if operation in ('on', 'reboot'):
-                    success = self.__wait_for_end_state(outlet, 'on')
+                    success = self.__wait_for_state(outlet, 'on')
                 else:
-                    success = self.__wait_for_end_state(outlet, 'off')
+                    success = self.__wait_for_state(outlet, 'off')
             except RetryError:
                 # If the operation timed out, no determination of the result
                 # can be made.
@@ -562,6 +616,18 @@ class APC(object):
         """
         return not result
 
-    @retry(stop_max_delay=MAX_STOP_DELAY, retry_on_result=__retry_if_not_state)
-    def __wait_for_end_state(self, outlet, end_state):
-        return self.outlet_status(outlet) is end_state
+    @retry(
+        stop_max_delay=MAX_STOP_DELAY, wait_fixed=INTER_RETRY_WAIT,
+        retry_on_result=__retry_if_not_state
+    )
+    def __wait_for_state(self, outlet, state):
+        """Wait until state is hit.
+
+        This will wait for MAX_STOP_DELAY with a inter-try delay of
+        INTER_RETRY_WAIT.
+
+        :param outlet: outlet number
+        :param state: state to wait for
+        :return: was the state hit?
+        """
+        return self.outlet_status(outlet) is state
