@@ -16,6 +16,9 @@ class APC(object):
     # This class requires more attributes and public methods to cover the
     # functionality of the device.
 
+    SNMP_TIMEOUT = 1.5  # 1.5 seconds
+    SNMP_RETRIES = 2
+
     MAX_STOP_DELAY = 15000  # 15 seconds
     INTER_RETRY_WAIT = 500  # 0.5 seconds
 
@@ -57,19 +60,15 @@ class APC(object):
 
     # Lookups
     LOAD_STATES = ['', 'lowLoad', 'normal', 'nearOverload', 'overload']
-    SENSOR_TYPES = ['',
-                    'temperatureOnly',
-                    'temperatureHumidity',
-                    'commsLost',
-                    'notInstalled']
+    SENSOR_TYPES = [
+        '', 'temperatureOnly', 'temperatureHumidity', 'commsLost',
+        'notInstalled'
+    ]
     COMM_STATUS_TYPES = ['', 'notInstalled', 'commsOK', 'commsLost']
-    SENSOR_STATUS_TYPES = ['',
-                           'notPresent',
-                           'belowMin',
-                           'belowLow',
-                           'normal',
-                           'aboveHigh',
-                           'aboveMax']
+    SENSOR_STATUS_TYPES = [
+        '', 'notPresent', 'belowMin', 'belowLow', 'normal', 'aboveHigh',
+        'aboveMax'
+    ]
     OUTLET_STATUS_TYPES = ['', 'off', 'on']
 
     def _get_query_string(self, query, param=None):
@@ -100,7 +99,7 @@ class APC(object):
 
         self._connection = Snmpy(
             self._host, self._snmp_public_auth, self._snmp_private_auth,
-            timeout=1.5, retries=2
+            timeout=self.SNMP_TIMEOUT, retries=self.SNMP_RETRIES
         )
         self._connection.add_mib_path(getcwd())
         self._connection.add_mib_path(path.dirname(path.abspath(__file__)))
@@ -599,7 +598,7 @@ class APC(object):
 
         :return: does the sensor support temperature measurements?
         """
-        return self.is_sensor_present and self.sensor_type.find('temp') > -1
+        return self.is_sensor_present and 'temp' in self.sensor_type.lower()
 
     @property
     def sensor_supports_humidity(self):
@@ -607,7 +606,7 @@ class APC(object):
 
         :return: does the sensor support relative humidity measurements?
         """
-        return self.is_sensor_present and self.sensor_type.find('Humid') > -1
+        return self.is_sensor_present and 'humid' in self.sensor_type.lower()
 
     def __retry_if_not_state(result):
         """Only keep retrying if the state is not what is expected.
