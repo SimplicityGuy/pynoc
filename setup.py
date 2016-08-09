@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pynoc',
-    version='1.2.2',
+    version='1.2.3',
 
     description='Network Operation Center gear',
     long_description='Python package to handle interact with various '
@@ -29,29 +29,46 @@ setup(
         'Topic :: System :: Networking',
     ],
 
-    keywords=['instrument', 'switch', 'pdu', 'Cisco', 'APC', 'network gear'],
+    keywords=[
+        'instrument',
+        'switch',
+        'pdu',
+        'Cisco',
+        'APC',
+        'network gear',
+    ],
 
     packages=find_packages(exclude=['contrib', 'docs', 'test*']),
 
-    install_requires=['pysnmp', 'snmpy', 'paramiko', 'netaddr', 'retrying'],
+    install_requires=[
+        'pysnmp',
+        'snmpy',
+        'paramiko',
+        'netaddr',
+        'retrying',
+    ],
 
-    setup_requires={'check-manifest',
-                    'setuptools-lint',
-                    'flake8',
-                    'flake8-docstrings',
-                    'pylint',
-                    'sphinx',
-                    'nose',
-                    'nosexcover',
-                    'pysnmp',
-                    'snmpy',
-                    'paramiko',
-                    'netaddr',
-                    'retrying', },
+    setup_requires={
+        'check-manifest',
+        'setuptools-lint',
+        'flake8',
+        'flake8-docstrings',
+        'pylint',
+        'sphinx',
+        'nose',
+        'nosexcover',
+        'pysnmp',
+        'snmpy',
+        'paramiko',
+        'netaddr',
+        'retrying',
+    },
 
     test_suite='nose.collector',
-    tests_require=['nose',
-                   'nosexcover', ],
+    tests_require=[
+        'nose',
+        'nosexcover',
+    ],
 
     package_data={
         'pynoc': [],
