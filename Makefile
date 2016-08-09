@@ -19,7 +19,7 @@ mib:
 check: mib
 	python setup.py check --strict --metadata --verbose
 	python setup.py lint
-	python setup.py flake8
+#	python setup.py flake8
 
 test: check
 	python setup.py nosetests

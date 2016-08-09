@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pynoc',
-    version='1.2.3',
+    version='1.2.4',
 
     description='Network Operation Center gear',
     long_description='Python package to handle interact with various '
@@ -48,11 +48,9 @@ setup(
         'retrying',
     ],
 
-    setup_requires={
+    setup_requires=[
         'check-manifest',
         'setuptools-lint',
-        'flake8',
-        'flake8-docstrings',
         'pylint',
         'sphinx',
         'nose',
@@ -62,7 +60,7 @@ setup(
         'paramiko',
         'netaddr',
         'retrying',
-    },
+    ],
 
     test_suite='nose.collector',
     tests_require=[
