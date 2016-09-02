@@ -48,22 +48,12 @@ setup(
         'retrying',
     ],
 
-    setup_requires=[
-        'check-manifest',
-        'setuptools-lint',
-        'pylint',
-        'sphinx',
-        'nose',
-        'nosexcover',
-        'pysnmp',
-        'snmpy',
-        'paramiko',
-        'netaddr',
-        'retrying',
-    ],
-
     test_suite='nose.collector',
+
     tests_require=[
+        'pylint',
+        'flake8',
+        'flake8-docstrings'
         'nose',
         'nosexcover',
     ],
