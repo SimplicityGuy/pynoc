@@ -44,6 +44,10 @@ setup(
 
     packages=find_packages(exclude=['contrib', 'docs', 'test*']),
 
+    setup_requires=[
+        'flake8'
+    ],
+
     install_requires=[
         'pysnmp',
         'snmpy',
@@ -55,14 +59,7 @@ setup(
     test_suite='nose.collector',
 
     tests_require=[
-        'pylint',
-        'flake8',
-        'flake8-docstrings',
         'nose',
         'nosexcover',
     ],
-
-    package_data={
-        'pynoc': [],
-    },
 )

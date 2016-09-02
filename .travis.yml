@@ -16,7 +16,7 @@ addons:
       - python-pysnmp4
 install:
   - pip install --upgrade pip
-  - pip install setuptools flake8 flake8-docstrings pylint
+  - pip install setuptools flake8 flake8-docstrings pylint setuptools-lint
 script:
   - make all
 deploy:
