@@ -1,0 +1,5 @@
+pysnmp
+snmpy
+netaddr
+paramiko
+retrying

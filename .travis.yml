@@ -20,7 +20,8 @@ addons:
       - snmp
 install:
   - pip install --upgrade pip
-  - pip install setuptools flake8 flake8-docstrings pylint setuptools-lint paramiko retrying
+  - pip install -r build-requirements.txt
+  - pip install -r requirements.txt
 script:
   - make all
 deploy:
