@@ -7,8 +7,8 @@
 
 from pkg_resources import get_distribution
 
-from cisco import CiscoSwitch
-from apc import APC
+from .cisco import CiscoSwitch
+from .apc import APC
 
 # pylint: disable=maybe-no-member
 # False positives: This message may report object members that are
