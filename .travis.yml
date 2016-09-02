@@ -1,15 +1,25 @@
 language: python
 python:
-- '2.7'
+  - "2.7"
+  - "3.2"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.5-dev"
+  - "nightly"
 sudo: required
 dist: trusty
-before_install:
-- sudo apt-get -qq update
-- sudo apt-get -y install snmp python-pip python-pysnmp4
+addons:
+  apt:
+    packages:
+      - snmp
+      - python-pip
+      - python-pysnmp4
 install:
-- pip install --upgrade pip setuptools flake8 flake8-docstrings pylint
+  - pip install --upgrade pip
+  - pip install setuptools flake8 flake8-docstrings pylint
 script:
-- make all
+  - make all
 deploy:
   provider: pypi
   user: SimplicityGuy
