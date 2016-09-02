@@ -45,7 +45,9 @@ setup(
     packages=find_packages(exclude=['contrib', 'docs', 'test*']),
 
     setup_requires=[
-        'flake8'
+        'setuptools-lint',
+        'flake8',
+        'sphinx',
     ],
 
     install_requires=[

@@ -4,3 +4,4 @@ flake8-docstrings
 pylint
 setuptools-lint
 sphinx
+wheel
