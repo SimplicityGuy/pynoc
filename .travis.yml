@@ -11,12 +11,16 @@ dist: trusty
 addons:
   apt:
     packages:
-      - snmp
+      - build-essential
+      - libssl-dev
+      - libffi-dev
+      - python-dev
       - python-pip
       - python-pysnmp4
+      - snmp
 install:
   - pip install --upgrade pip
-  - pip install setuptools flake8 flake8-docstrings pylint setuptools-lint
+  - pip install setuptools flake8 flake8-docstrings pylint setuptools-lint paramiko retrying
 script:
   - make all
 deploy:
