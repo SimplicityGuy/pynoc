@@ -403,7 +403,8 @@ class APC(object):
         """Type of sensor.
 
         :return: type of sensor, one of
-        ['temperatureOnly', 'temperatureHumidity', 'commsLost', 'notInstalled']
+            ['temperatureOnly', 'temperatureHumidity', 'commsLost',
+            'notInstalled']
         """
         index = 4
         if self.is_sensor_present:

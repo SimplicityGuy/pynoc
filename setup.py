@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pynoc',
-    version='1.2.4',
+    version='1.3.0',
 
     description='Network Operation Center gear',
     long_description='Python package to handle interact with various '
@@ -25,6 +25,10 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: System :: Hardware',
         'Topic :: System :: Networking',
     ],
@@ -40,6 +44,12 @@ setup(
 
     packages=find_packages(exclude=['contrib', 'docs', 'test*']),
 
+    setup_requires=[
+        'setuptools-lint',
+        'flake8',
+        'sphinx',
+    ],
+
     install_requires=[
         'pysnmp',
         'snmpy',
@@ -48,27 +58,10 @@ setup(
         'retrying',
     ],
 
-    setup_requires=[
-        'check-manifest',
-        'setuptools-lint',
-        'pylint',
-        'sphinx',
-        'nose',
-        'nosexcover',
-        'pysnmp',
-        'snmpy',
-        'paramiko',
-        'netaddr',
-        'retrying',
-    ],
-
     test_suite='nose.collector',
+
     tests_require=[
         'nose',
         'nosexcover',
     ],
-
-    package_data={
-        'pynoc': [],
-    },
 )

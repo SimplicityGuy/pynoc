@@ -1,20 +1,34 @@
 language: python
 python:
-- '2.7'
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.5-dev"
+  - "nightly"
 sudo: required
 dist: trusty
-before_install:
-- sudo apt-get -qq update
-- sudo apt-get -y install snmp python-pip python-pysnmp4
+addons:
+  apt:
+    packages:
+      - build-essential
+      - libssl-dev
+      - libffi-dev
+      - python-dev
+      - python-pip
+      - python-pysnmp4
+      - snmp
 install:
-- pip install --upgrade pip setuptools flake8 flake8-docstrings pylint
+  - pip install --upgrade pip
+  - pip install -r build-requirements.txt
+  - pip install -r requirements.txt
 script:
-- make all
+  - make all
 deploy:
   provider: pypi
   user: SimplicityGuy
   password:
     secure: OzpLy+xBdaEmXSsKuu6Wtlhf5/mRytKMKzaGY/EklLIUs7EzXqbcvrbxiGRWsgf8XtiNIHmA2ekDYvBxZFBU+YQ1rBUvrdVqynv6V2XbkbPAdcyDl3bB4ZdaM7Eh7/HkGLc1atgyZFdDzlo2M7of6grY0ZzEjYJExlzxdRbhAmQO472gVMT6YrQQwHEI9ZHun+9iO0eF7Zp1yQXUs7IRFIJBSWHqid9U77geYTA2Ig+UZaTLUxM0Eun3FRX4pmqADtf8UhLaLVOcr7G7jQqETCp8MinANB9DWOLHRABnuq9V6M+DqVQB5un4p6T8+qt9+aXdAVqdeob8cybv/3SQTZUJkM/ngU8q0WEqS3rHAPG3OqOoLFfKcVKC3keycz82x4E7mjBVgaJPqo5v0+D3s28SPgmAQ+tDUw5p5BNMDnDmOaYDlji6ELUMEIMPBZhl1zULpsrU5OYJlhAXtHuLFtudtzL5SRlS13/4w5T9EprnpIlXP6Ea+qP4nVKbybuu8264nVw+cljkP2ur30UKdppm04GhdDWXO9wY4gRw8UqOYjZcCDtd//R9oU13mx/mZOXuD/A6Aq1YIn/n3G2zipq5ayztlavJahPmskmMl/QhgXPhUMYL4AkQKjWDhR5nz4R6R3waH5c8NeueW6PKb0NKIBUPKeAIAm2ohd0aG9c=
+  distributions: "sdist bdist_wheel"
   on:
-    tags: true
     branch: master
