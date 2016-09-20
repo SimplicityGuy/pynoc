@@ -21,6 +21,7 @@ class CiscoSwitch(object):
     CMD_VERSION_SIGNALS = ['BOOTLDR']
 
     CMD_TERMINAL_LENGTH = 'terminal length 0'
+    CMD_TERMINAL_WIDTH = 'terminal width 511'
 
     CMD_IPDT = 'sh ip device track all'
     CMD_IPDT_SIGNALS = ['Enabled interfaces']
@@ -34,9 +35,11 @@ class CiscoSwitch(object):
 
     CMD_POWER_OFF = 'power inline never'
     CMD_POWER_ON = 'power inline auto'
+    CMD_POWER_SHOW = 'sh power inline'
 
     CMD_VLAN_MODE_ACCESS = 'switchport mode access'
     CMD_VLAN_SET = 'switchport access vlan {0}'
+    CMD_VLAN_SHOW = 'sh vlan'
 
     CMD_END = 'end'
 
@@ -121,6 +124,7 @@ class CiscoSwitch(object):
             return
 
         self._send_command(self.CMD_TERMINAL_LENGTH, self.CMD_GENERIC_SIGNALS)
+        self._send_command(self.CMD_TERMINAL_WIDTH, self.CMD_GENERIC_SIGNALS)
 
     def ipdt(self):
         """IP Device Tracking (IPDT) information.
@@ -152,7 +156,7 @@ class CiscoSwitch(object):
         """Enable a port for POE.
 
         :param port: port to enable POE on, e.g. Gi1/0/1
-        :return:
+        :return: True if the command succeeded, False otherwise
         """
         if not self._ready:
             return
@@ -167,11 +171,16 @@ class CiscoSwitch(object):
         ]
         self._send_commands(cmds)
 
+        verify = self._send_command(
+            self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
+        )
+        return CiscoSwitch._verify_poe_status(verify, port, "on")
+
     def poe_off(self, port):
         """Disable a port for POE.
 
         :param port: port to disable POE on, e.g. Gi1/0/1
-        :return:
+        :return: True if the command succeeded, False otherwise
         """
         if not self._ready:
             return
@@ -186,12 +195,17 @@ class CiscoSwitch(object):
         ]
         self._send_commands(cmds)
 
+        verify = self._send_command(
+            self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
+        )
+        return CiscoSwitch._verify_poe_status(verify, port, "off")
+
     def change_vlan(self, port, vlan):
         """Change the VLAN assignment on a port.
 
         :param port: port to change VLAN assignment on, e.g. Gi1/0/1
         :param vlan: VLAN id
-        :return:
+        :return: True if the command succeeded, False otherwise
         """
         if not self._ready:
             return
@@ -202,10 +216,15 @@ class CiscoSwitch(object):
             (self.CMD_CONFIGURE_INTERFACE.format(port),
              self.CMD_CONFIGURE_SIGNALS),
             (self.CMD_VLAN_MODE_ACCESS, self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_VLAN_SET.format(vlan), self.CMD_CONFIGURE_SIGNALS),
+            (self.CMD_VLAN_SET.format(int(vlan)), self.CMD_CONFIGURE_SIGNALS),
             (self.CMD_END, self.CMD_GENERIC_SIGNALS)
         ]
         self._send_commands(cmds)
+
+        verify = self._send_command(
+            self.CMD_VLAN_SHOW, self.CMD_GENERIC_SIGNALS
+        )
+        return CiscoSwitch._verify_vlan_status(verify, port, int(vlan))
 
     @property
     def version(self):
@@ -425,3 +444,87 @@ class CiscoSwitch(object):
                 }
             )
         return sorted(lookup, key=lambda k: k['interface'])
+
+    @staticmethod
+    def _verify_poe_status(output, port, state):
+        """Verify that the given port is in the given state.
+
+        :param output: the output of the command
+            Module   Available     Used     Remaining
+                      (Watts)     (Watts)    (Watts)
+            ------   ---------   --------   ---------
+            1           740.0      138.6       601.4
+            Interface Admin  Oper       Power   Device              Class Max
+                                        (Watts)
+            --------- ------ ---------- ------- ------------------- ----- ----
+            Gi1/0/1   auto   off        0.0     n/a                 n/a   15.4
+            Gi1/0/2   auto   on         0.0     n/a                 n/a   15.4
+            Gi1/0/3   off    off        0.0     n/a                 n/a   15.4
+        :param port: port to check
+        :param state: expected state
+        :return: True if the port is in the expected state, False otherwise
+        """
+        if "on" in state:
+            state = "auto"
+
+        matches = False
+        lines = [line.strip() for line in output.splitlines()]
+        lines.append('')
+        while len(lines) > 0:
+            line = lines.pop()
+
+            # Table entries will always have a '/' for the interface.
+            # If there isn't one it's not a row we care about.
+            if line.find('/') < 0:
+                continue
+
+            values = [entry for entry in line.split() if entry]
+
+            if values[0] != port:
+                continue
+
+            matches = state in values[1]
+            break
+
+        return matches
+
+    @staticmethod
+    def _verify_vlan_status(output, port, vlan):
+        """Verify that the given port is assigned to the given vlan.
+
+        :param output:
+            VLAN Name                             Status    Ports
+            ---- -------------------------------- --------- ------------------
+            1    default                          active    Te1/0/1, Te1/0/2
+            701  NET-701                          active    Gi1/0/1, Gi1/0/2
+            702  NET-702                          active    Gi1/0/8
+            703  NET-703                          active    Gi1/0/7, Gi1/0/10
+            704  NET-704                          active    Gi1/0/5, Gi1/0/9
+            705  NET-705                          active
+
+        :param port: port to check
+        :param vlan: expected vlan
+        :return: True if the port is assigned to the expected vlan, False
+        otherwise
+        """
+        matches = False
+        lines = [line.strip() for line in output.splitlines()]
+        lines.append('')
+        while len(lines) > 0:
+            line = lines.pop().replace(',', '')
+
+            # Table entries will have a '/' for the ports.
+            # If there isn't one it's not a row we care about, even if it's a
+            # vlan with no ports assigned to it.
+            if line.find('/') < 0:
+                continue
+
+            values = [entry for entry in line.split() if entry]
+
+            if int(values[0]) != vlan:
+                continue
+
+            matches = port in values[3:]
+            break
+
+        return matches
