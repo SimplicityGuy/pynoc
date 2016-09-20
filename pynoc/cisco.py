@@ -21,7 +21,6 @@ class CiscoSwitch(object):
     CMD_VERSION_SIGNALS = ['BOOTLDR']
 
     CMD_TERMINAL_LENGTH = 'terminal length 0'
-    CMD_TERMINAL_WIDTH = 'terminal width 511'
 
     CMD_IPDT = 'sh ip device track all'
     CMD_IPDT_SIGNALS = ['Enabled interfaces']
@@ -124,7 +123,6 @@ class CiscoSwitch(object):
             return
 
         self._send_command(self.CMD_TERMINAL_LENGTH, self.CMD_GENERIC_SIGNALS)
-        self._send_command(self.CMD_TERMINAL_WIDTH, self.CMD_GENERIC_SIGNALS)
 
     def ipdt(self):
         """IP Device Tracking (IPDT) information.
@@ -174,7 +172,8 @@ class CiscoSwitch(object):
         verify = self._send_command(
             self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
         )
-        return CiscoSwitch._verify_poe_status(verify, port, "on")
+        matches, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
+        return matches
 
     def poe_off(self, port):
         """Disable a port for POE.
@@ -198,7 +197,20 @@ class CiscoSwitch(object):
         verify = self._send_command(
             self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
         )
-        return CiscoSwitch._verify_poe_status(verify, port, "off")
+        matches, _ = CiscoSwitch._verify_poe_status(verify, port, "off")
+        return matches
+
+    def is_poe(self, port):
+        """Get the POE state for a port.
+
+        :param port: port to determine state of, e.g. Gi1/0/1
+        :return: True if POE is enabled, False otherwise
+        """
+        verify = self._send_command(
+            self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
+        )
+        _, poe = CiscoSwitch._verify_poe_status(verify, port, "unknown")
+        return "auto" in poe
 
     def change_vlan(self, port, vlan):
         """Change the VLAN assignment on a port.
@@ -224,7 +236,20 @@ class CiscoSwitch(object):
         verify = self._send_command(
             self.CMD_VLAN_SHOW, self.CMD_GENERIC_SIGNALS
         )
-        return CiscoSwitch._verify_vlan_status(verify, port, int(vlan))
+        matches, _ = CiscoSwitch._verify_vlan_status(verify, port, int(vlan))
+        return matches
+
+    def vlan(self, port):
+        """Get the VLAN assignment on a port.
+
+        :param port: port to determine VLAN assignment on, e.g. Gi1/0/1
+        :return: VLAN id
+        """
+        verify = self._send_command(
+            self.CMD_VLAN_SHOW, self.CMD_GENERIC_SIGNALS
+        )
+        _, vlan = CiscoSwitch._verify_vlan_status(verify, port, 0)
+        return vlan
 
     @property
     def version(self):
@@ -365,7 +390,7 @@ class CiscoSwitch(object):
         lines = [line.strip() for line in output.splitlines()]
         lines.append('')
         while len(lines) > 0:
-            line = lines.pop()
+            line = lines.pop(0)
 
             # Table entries will always have a '.' for the MAC address.
             # If there isn't one it's not a row we care about.
@@ -422,7 +447,7 @@ class CiscoSwitch(object):
         lines = [line.strip() for line in output.splitlines()]
         lines.append('')
         while len(lines) > 0:
-            line = lines.pop()
+            line = lines.pop(0)
 
             # Table entries will always have a '.' for the MAC address.
             # If there isn't one it's not a row we care about.
@@ -462,7 +487,8 @@ class CiscoSwitch(object):
             Gi1/0/3   off    off        0.0     n/a                 n/a   15.4
         :param port: port to check
         :param state: expected state
-        :return: True if the port is in the expected state, False otherwise
+        :return: (True, actual state) if the port is in the expected state,
+        (False, actual state) otherwise
         """
         if "on" in state:
             state = "auto"
@@ -470,8 +496,9 @@ class CiscoSwitch(object):
         matches = False
         lines = [line.strip() for line in output.splitlines()]
         lines.append('')
+        actual_state = "unknown"
         while len(lines) > 0:
-            line = lines.pop()
+            line = lines.pop(0)
 
             # Table entries will always have a '/' for the interface.
             # If there isn't one it's not a row we care about.
@@ -480,13 +507,12 @@ class CiscoSwitch(object):
 
             values = [entry for entry in line.split() if entry]
 
-            if values[0] != port:
-                continue
+            if values[0] == port:
+                matches = state in values[1]
+                actual_state = values[1]
+                break
 
-            matches = state in values[1]
-            break
-
-        return matches
+        return matches, actual_state
 
     @staticmethod
     def _verify_vlan_status(output, port, vlan):
@@ -504,14 +530,16 @@ class CiscoSwitch(object):
 
         :param port: port to check
         :param vlan: expected vlan
-        :return: True if the port is assigned to the expected vlan, False
-        otherwise
+        :return: (True, actual vlan #) if the port is assigned to the expected
+        vlan, (False, actual vlan #) otherwise
         """
         matches = False
         lines = [line.strip() for line in output.splitlines()]
         lines.append('')
+        previous_vlan = -1
+        actual_vlan = -1
         while len(lines) > 0:
-            line = lines.pop().replace(',', '')
+            line = lines.pop(0).replace(',', '')
 
             # Table entries will have a '/' for the ports.
             # If there isn't one it's not a row we care about, even if it's a
@@ -520,11 +548,15 @@ class CiscoSwitch(object):
                 continue
 
             values = [entry for entry in line.split() if entry]
+            if 'active' in values:
+                previous_vlan = int(values[0])
+                ports = values[3:]
+            else:
+                ports = values
 
-            if int(values[0]) != vlan:
-                continue
+            if port in ports:
+                actual_vlan = previous_vlan
+                if previous_vlan == vlan:
+                    matches = True
 
-            matches = port in values[3:]
-            break
-
-        return matches
+        return matches, actual_vlan
