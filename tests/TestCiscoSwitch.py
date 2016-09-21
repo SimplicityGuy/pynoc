@@ -61,5 +61,11 @@ class TestCisco(unittest.TestCase):
         shorthand = self.cisco._shorthand_port_notation("TenGigabitEthernet1/0/1")
         self.assertEqual(shorthand, "Ten1/0/1")
 
+    def test_is_poe(self):
+        self.assertIsNotNone(self.cisco.is_poe("Gi1/0/1"))
+
+    def test_vlan(self):
+        self.assertIsNot(self.cisco.vlan("Gi1/0/1"), -1)
+
     def test_zzz_disconnect(self):
         self.cisco.disconnect()
