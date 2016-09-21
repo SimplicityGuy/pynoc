@@ -206,6 +206,10 @@ class CiscoSwitch(object):
         :param port: port to determine state of, e.g. Gi1/0/1
         :return: True if POE is enabled, False otherwise
         """
+        if not self._ready:
+            return "unknown"
+
+        port = self._shorthand_port_notation(port)
         verify = self._send_command(
             self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
         )
@@ -245,6 +249,10 @@ class CiscoSwitch(object):
         :param port: port to determine VLAN assignment on, e.g. Gi1/0/1
         :return: VLAN id
         """
+        if not self._ready:
+            return -1
+
+        port = self._shorthand_port_notation(port)
         verify = self._send_command(
             self.CMD_VLAN_SHOW, self.CMD_GENERIC_SIGNALS
         )
