@@ -1,6 +1,7 @@
 clean:
 	rm -fR *.png *.zip *.egg *.html *.xml *.mib
 	rm -fR .eggs/ *.egg-info/ .coverage/ build/ dist/ docs/_build
+	find . -name *.pyc -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
 	python setup.py clean --all
 

@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pynoc',
-    version='1.4.1',
+    version='1.4.2',
 
     description='Network Operation Center gear',
     long_description='Python package to handle interact with various '
@@ -43,12 +43,6 @@ setup(
     ],
 
     packages=find_packages(exclude=['contrib', 'docs', 'test*']),
-
-    setup_requires=[
-        'setuptools-lint',
-        'flake8',
-        'sphinx',
-    ],
 
     install_requires=[
         'pysnmp',

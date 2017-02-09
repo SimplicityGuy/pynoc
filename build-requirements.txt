@@ -1,7 +1,9 @@
-setuptools
 flake8
 flake8-docstrings
 pylint
+setuptools
 setuptools-lint
+setuptools-version-command
+setuptools-scm
 sphinx
 wheel
