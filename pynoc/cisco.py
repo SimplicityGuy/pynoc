@@ -2,6 +2,7 @@
 
 import logging
 
+from six import PY3
 from netaddr import EUI, mac_unix_expanded
 from paramiko import SSHClient, AutoAddPolicy
 
@@ -338,7 +339,10 @@ class CiscoSwitch(object):
 
         read_buffer = ''
         while not any(read_buffer.find(signal) > -1 for signal in signals):
-            read_buffer += self._shell.recv(self.MAX_COMMAND_READ)
+            read = self._shell.recv(self.MAX_COMMAND_READ)
+            if PY3:  # If running in python3, convert byte string to native str
+                read = read.decode()
+            read_buffer += read
 
         if log:
             self._logger.debug('Received output: %s', read_buffer)
