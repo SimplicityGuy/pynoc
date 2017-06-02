@@ -288,7 +288,9 @@ class CiscoSwitch(object):
 
         :return: has a connection to the switch been made?
         """
-        return self._shell is not None
+        output = self._send_command('', self.CMD_GENERIC_SIGNALS)
+        active_ssh = any(self.CMD_GENERIC_SIGNALS in output)
+        return self._shell is not None and active_ssh
 
     def _shorthand_port_notation(self, port):
         """Shorthand port notation.
