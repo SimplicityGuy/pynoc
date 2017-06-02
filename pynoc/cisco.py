@@ -41,6 +41,8 @@ class CiscoSwitch(object):
     CMD_VLAN_SET = 'switchport access vlan {0}'
     CMD_VLAN_SHOW = 'sh vlan'
 
+    CMD_CARRIAGE_RETURN = ''
+
     CMD_END = 'end'
 
     PORT_NOTATION = {
@@ -83,7 +85,9 @@ class CiscoSwitch(object):
                              look_for_keys=False)
         self._shell = self._client.invoke_shell()
         self._ready = True
-        output = self._send_command('', self.CMD_LOGIN_SIGNALS)
+        output = self._send_command(
+            self.CMD_CARRIAGE_RETURN, self.CMD_LOGIN_SIGNALS
+        )
         if output.find('>') > 0:
             self._enable_needed = True
             self._ready = False
@@ -288,7 +292,9 @@ class CiscoSwitch(object):
 
         :return: has a connection to the switch been made?
         """
-        output = self._send_command('', self.CMD_GENERIC_SIGNALS)
+        output = self._send_command(
+            self.CMD_CARRIAGE_RETURN, self.CMD_GENERIC_SIGNALS
+        )
         active_ssh = any(self.CMD_GENERIC_SIGNALS in output)
         return self._shell is not None and active_ssh
 
