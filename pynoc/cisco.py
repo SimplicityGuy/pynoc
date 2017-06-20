@@ -269,7 +269,7 @@ class CiscoSwitch(object):
 
     @property
     def version(self):
-        """The Cisco IOS version.
+        """Retrieve the Cisco IOS version.
 
         :return: The Cisco IOS version.
         """
@@ -283,7 +283,7 @@ class CiscoSwitch(object):
 
     @property
     def host(self):
-        """The IP address or hostname of the switch.
+        """Retrieve the IP address or hostname of the switch.
 
         :return: IP address or hostname of the switch
         """

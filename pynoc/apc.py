@@ -257,7 +257,7 @@ class APC(object):
 
     @property
     def serial_number(self):
-        """Serial number.
+        """Return the serial number.
 
         :return: PDU serial number
         """
@@ -267,7 +267,7 @@ class APC(object):
 
     @property
     def num_outlets(self):
-        """Number of outlets in the PDU.
+        """Return the number of outlets in the PDU.
 
         :return: total number of outlets in the PDU
         """
@@ -277,7 +277,7 @@ class APC(object):
 
     @property
     def num_switched_outlets(self):
-        """Number of switched outlets in the PDU.
+        """Return the number of switched outlets in the PDU.
 
         :return: number of switched outlets in the PDU
         """
@@ -287,7 +287,7 @@ class APC(object):
 
     @property
     def num_metered_outlets(self):
-        """Number of metered outlets in the PDU.
+        """Return the number of metered outlets in the PDU.
 
         :return: number of metered outlets in the PDU
         """
@@ -331,7 +331,7 @@ class APC(object):
 
     @property
     def current(self):
-        """The current utilization of the PDU.
+        """Return the current utilization of the PDU.
 
         :return: current, in amps
         """
@@ -345,7 +345,7 @@ class APC(object):
 
     @property
     def power(self):
-        """The power utilization of the PDU.
+        """Return the power utilization of the PDU.
 
         :return: power, in kW
         """
