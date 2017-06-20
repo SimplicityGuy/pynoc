@@ -343,7 +343,7 @@ class CiscoSwitch(object):
         """
         send_command = command + '\n'
         if log:
-            self._logger.info('Sending command: %s', send_command)
+            self._logger.info('Sending command: %s', send_command.strip())
 
         self._shell.send(send_command)
 
