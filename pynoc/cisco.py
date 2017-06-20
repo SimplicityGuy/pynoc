@@ -10,6 +10,9 @@ from paramiko import SSHClient, AutoAddPolicy
 class CiscoSwitch(object):
     """Cisco switch control."""
 
+    # pylint: disable=len-as-condition
+    # Parsing command line output has uncertain lengths
+
     MAX_COMMAND_READ = 16
 
     CMD_LOGIN_SIGNALS = ['>', '#']
@@ -315,7 +318,7 @@ class CiscoSwitch(object):
         lower = port.lower()
         output = port
 
-        if any(lower.find(port) == 0 for port in self.PORT_NOTATION.keys()):
+        if any(lower.find(port) == 0 for port in self.PORT_NOTATION):
             for item in self.PORT_NOTATION.items():
                 if lower.startswith(item[0]):
                     output = lower.replace(item[0], item[1])
