@@ -2,12 +2,16 @@
 
 import logging
 
+from six import PY3
 from netaddr import EUI, mac_unix_expanded
 from paramiko import SSHClient, AutoAddPolicy
 
 
 class CiscoSwitch(object):
     """Cisco switch control."""
+
+    # pylint: disable=len-as-condition
+    # Parsing command line output has uncertain lengths
 
     MAX_COMMAND_READ = 16
 
@@ -39,6 +43,8 @@ class CiscoSwitch(object):
     CMD_VLAN_MODE_ACCESS = 'switchport mode access'
     CMD_VLAN_SET = 'switchport access vlan {0}'
     CMD_VLAN_SHOW = 'sh vlan'
+
+    CMD_CARRIAGE_RETURN = ''
 
     CMD_END = 'end'
 
@@ -82,7 +88,9 @@ class CiscoSwitch(object):
                              look_for_keys=False)
         self._shell = self._client.invoke_shell()
         self._ready = True
-        output = self._send_command('', self.CMD_LOGIN_SIGNALS)
+        output = self._send_command(
+            self.CMD_CARRIAGE_RETURN, self.CMD_LOGIN_SIGNALS
+        )
         if output.find('>') > 0:
             self._enable_needed = True
             self._ready = False
@@ -261,7 +269,7 @@ class CiscoSwitch(object):
 
     @property
     def version(self):
-        """The Cisco IOS version.
+        """Retrieve the Cisco IOS version.
 
         :return: The Cisco IOS version.
         """
@@ -275,7 +283,7 @@ class CiscoSwitch(object):
 
     @property
     def host(self):
-        """The IP address or hostname of the switch.
+        """Retrieve the IP address or hostname of the switch.
 
         :return: IP address or hostname of the switch
         """
@@ -287,7 +295,13 @@ class CiscoSwitch(object):
 
         :return: has a connection to the switch been made?
         """
-        return self._shell is not None
+        output = self._send_command(
+            self.CMD_CARRIAGE_RETURN, self.CMD_LOGIN_SIGNALS
+        )
+        active_ssh = any(
+            signal in output for signal in self.CMD_LOGIN_SIGNALS
+        )
+        return self._shell is not None and active_ssh
 
     def _shorthand_port_notation(self, port):
         """Shorthand port notation.
@@ -304,7 +318,7 @@ class CiscoSwitch(object):
         lower = port.lower()
         output = port
 
-        if any(lower.find(port) == 0 for port in self.PORT_NOTATION.keys()):
+        if any(lower.find(port) == 0 for port in self.PORT_NOTATION):
             for item in self.PORT_NOTATION.items():
                 if lower.startswith(item[0]):
                     output = lower.replace(item[0], item[1])
@@ -332,13 +346,16 @@ class CiscoSwitch(object):
         """
         send_command = command + '\n'
         if log:
-            self._logger.info('Sending command: %s', send_command)
+            self._logger.info('Sending command: %s', send_command.strip())
 
         self._shell.send(send_command)
 
         read_buffer = ''
         while not any(read_buffer.find(signal) > -1 for signal in signals):
-            read_buffer += self._shell.recv(self.MAX_COMMAND_READ)
+            read = self._shell.recv(self.MAX_COMMAND_READ)
+            if PY3:  # If running in python3, convert byte string to native str
+                read = read.decode()
+            read_buffer += read
 
         if log:
             self._logger.debug('Received output: %s', read_buffer)

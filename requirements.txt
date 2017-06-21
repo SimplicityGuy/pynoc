@@ -3,3 +3,4 @@ snmpy
 netaddr
 paramiko
 retrying
+six
