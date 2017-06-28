@@ -2,10 +2,9 @@
 
 import logging
 from datetime import datetime
-from os import getcwd, path
 
+import pysnmp.entity.rfc3413.oneliner.cmdgen as cmdgen
 from retrying import retry, RetryError
-from snmpy import Snmpy
 
 
 class APC(object):
@@ -16,47 +15,80 @@ class APC(object):
     # This class requires more attributes and public methods to cover the
     # functionality of the device.
 
+    ERROR_MSG = 'SNMP%s of %s on %s failed.'
+
+    SNMP_VERSION_2_2C = 1
+    SNMP_PORT = 161
     SNMP_TIMEOUT = 1.5  # 1.5 seconds
     SNMP_RETRIES = 2
 
     MAX_STOP_DELAY = 15000  # 15 seconds
     INTER_RETRY_WAIT = 500  # 0.5 seconds
 
-    PREFIX = 'PowerNet-MIB'
+    # APC PowerNet-MIB Base OID
+    BASE_OID = (1, 3, 6, 1, 4, 1, 318, 1, 1, 26)
 
     # Static readonly data
-    Q_NAME = 'rPDU2IdentName.1'
-    Q_LOCATION = 'rPDU2IdentLocation.1'
-    Q_HARDWARE_REV = 'rPDU2IdentHardwareRev.1'
-    Q_FIRMWARE_REV = 'rPDU2IdentFirmwareRev.1'
-    Q_MANUFACTURE_DATE = 'rPDU2IdentDateOfManufacture.1'
-    Q_MODEL_NUMBER = 'rPDU2IdentModelNumber.1'
-    Q_SERIAL_NUMBER = 'rPDU2IdentSerialNumber.1'
-    Q_NUM_OUTLETS = 'rPDU2DevicePropertiesNumOutlets.1'
-    Q_NUM_SWITCHED_OUTLETS = 'rPDU2DevicePropertiesNumSwitchedOutlets.1'
-    Q_NUM_METERED_OUTLETS = 'rPDU2DevicePropertiesNumMeteredOutlets.1'
-    Q_MAX_CURRENT_RATING = 'rPDU2DevicePropertiesMaxCurrentRating.1'
-    Q_PHASE_VOLTAGE = 'rPDU2PhaseStatusVoltage.1'
+    # PowerNet-MIB::rPDU2IdentName.1
+    Q_NAME = BASE_OID + (2, 1, 3, 1)
+    # PowerNet-MIB::rPDU2IdentLocation.1
+    Q_LOCATION = BASE_OID + (2, 1, 4, 1)
+    # PowerNet-MIB::rPDU2IdentHardwareRev.1
+    Q_HARDWARE_REV = BASE_OID + (2, 1, 5, 1)
+    # PowerNet-MIB::rPDU2IdentFirmwareRev.1
+    Q_FIRMWARE_REV = BASE_OID + (2, 1, 6, 1)
+    # PowerNet-MIB::rPDU2IdentDateOfManufacture.1
+    Q_MANUFACTURE_DATE = BASE_OID + (2, 1, 7, 1)
+    # PowerNet-MIB::rPDU2IdentModelNumber.1
+    Q_MODEL_NUMBER = BASE_OID + (2, 1, 8, 1)
+    # PowerNet-MIB::rPDU2IdentSerialNumber.1
+    Q_SERIAL_NUMBER = BASE_OID + (2, 1, 9, 1)
+    # PowerNet-MIB::rPDU2DevicePropertiesNumOutlets.1
+    Q_NUM_OUTLETS = BASE_OID + (4, 2, 1, 4, 1)
+    # PowerNet-MIB::rPDU2DevicePropertiesNumSwitchedOutlets.1
+    Q_NUM_SWITCHED_OUTLETS = BASE_OID + (4, 2, 1, 5, 1)
+    # PowerNet-MIB::rPDU2DevicePropertiesNumMeteredOutlets.1
+    Q_NUM_METERED_OUTLETS = BASE_OID + (4, 2, 1, 6, 1)
+    # PowerNet-MIB::rPDU2DevicePropertiesMaxCurrentRating.1
+    Q_MAX_CURRENT_RATING = BASE_OID + (4, 2, 1, 9, 1)
+    # PowerNet-MIB::rPDU2PhaseStatusVoltage.1
+    Q_PHASE_VOLTAGE = BASE_OID + (6, 3, 1, 6, 1)
 
     # Dynamic readonly data
-    Q_PHASE_LOAD_STATE = 'rPDU2PhaseStatusLoadState.1'
-    Q_PHASE_CURRENT = 'rPDU2PhaseStatusCurrent.1'
-    Q_POWER = 'rPDU2DeviceStatusPower.1'
-    Q_SENSOR_TYPE = 'rPDU2SensorTempHumidityStatusType.1'
-    Q_SENSOR_NAME = 'rPDU2SensorTempHumidityStatusName.1'
-    Q_SENSOR_COMM_STATUS = 'rPDU2SensorTempHumidityStatusCommStatus.1'
-    Q_SENSOR_TEMP_F = 'rPDU2SensorTempHumidityStatusTempF.1'
-    Q_SENSOR_TEMP_C = 'rPDU2SensorTempHumidityStatusTempC.1'
-    Q_SENSOR_TEMP_STATUS = 'rPDU2SensorTempHumidityStatusTempStatus.1'
-    Q_SENSOR_HUMIDITY = 'rPDU2SensorTempHumidityStatusRelativeHumidity.1'
-    Q_SENSOR_HUMIDITY_STATUS = 'rPDU2SensorTempHumidityStatusHumidityStatus.1'
-    Q_OUTLET_NAME = 'rPDU2OutletSwitchedStatusName.{0}'
-    Q_OUTLET_STATUS = 'rPDU2OutletSwitchedStatusState.{0}'
+    # PowerNet-MIB::rPDU2PhaseStatusLoadState.1
+    Q_PHASE_LOAD_STATE = BASE_OID + (6, 3, 1, 4, 1)
+    # PowerNet-MIB::rPDU2PhaseStatusCurrent.1
+    Q_PHASE_CURRENT = BASE_OID + (6, 3, 1, 5, 1)
+    # PowerNet-MIB::rPDU2DeviceStatusPower.1
+    Q_POWER = BASE_OID + (4, 3, 1, 5, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusType.1
+    Q_SENSOR_TYPE = BASE_OID + (10, 2, 2, 1, 5, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusName.1
+    Q_SENSOR_NAME = BASE_OID + (10, 2, 2, 1, 3, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusCommStatus.1
+    Q_SENSOR_COMM_STATUS = BASE_OID + (10, 2, 2, 1, 6, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusTempF.1
+    Q_SENSOR_TEMP_F = BASE_OID + (10, 2, 2, 1, 7, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusTempC.1
+    Q_SENSOR_TEMP_C = BASE_OID + (10, 2, 2, 1, 8, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusTempStatus.1
+    Q_SENSOR_TEMP_STATUS = BASE_OID + (10, 2, 2, 1, 9, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusRelativeHumidity.1
+    Q_SENSOR_HUMIDITY = BASE_OID + (10, 2, 2, 1, 10, 1)
+    # PowerNet-MIB::rPDU2SensorTempHumidityStatusHumidityStatus.1
+    Q_SENSOR_HUMIDITY_STATUS = BASE_OID + (10, 2, 2, 1, 11, 1)
+    # PowerNet-MIB::rPDU2OutletSwitchedStatusName.24
+    Q_OUTLET_NAME = BASE_OID + (9, 2, 3, 1, 3)  # Requires outlet number
+    # PowerNet-MIB::rPDU2OutletSwitchedStatusState.24
+    Q_OUTLET_STATUS = BASE_OID + (9, 2, 3, 1, 5)  # Requires outlet number
 
     # Dynamic readwrite data
-    Q_SENSOR_NAME_RW = 'rPDU2SensorTempHumidityConfigName.1'
-    Q_OUTLET_NAME_RW = 'rPDU2OutletSwitchedConfigName.{0}'
-    Q_OUTLET_COMMAND_RW = 'rPDU2OutletSwitchedControlCommand.{0}'
+    # PowerNet-MIB::rPDU2SensorTempHumidityConfigName.1
+    Q_SENSOR_NAME_RW = BASE_OID + (10, 2, 1, 1, 3, 1)
+    # PowerNet-MIB::rPDU2OutletSwitchedConfigName.24
+    Q_OUTLET_NAME_RW = BASE_OID + (9, 2, 1, 1, 3)  # Requires outlet number
+    # PowerNet-MIB::rPDU2OutletSwitchedControlCommand.24
+    Q_OUTLET_COMMAND_RW = BASE_OID + (9, 2, 4, 1, 5)  # Requires outlet number
 
     # Lookups
     LOAD_STATES = [
@@ -94,17 +126,6 @@ class APC(object):
         'on',
     ]
 
-    def _get_query_string(self, query, param=None):
-        """Generate a well-formatted SNMP query string.
-
-        :param query: which query to use
-        :param param: additional parameter, usually outlet number
-        :return: well-formatted SNMP query string
-        """
-        if param:
-            query = query.format(param)
-        return '{0}::{1}'.format(self.PREFIX, query)
-
     def __init__(self, hostname_or_ip_address,
                  public_community, private_community):
         """Create an APC object.
@@ -117,61 +138,39 @@ class APC(object):
         self._host = hostname_or_ip_address
         self._vendor = 'APC'
 
-        self._snmp_public_auth = public_community
-        self._snmp_private_auth = private_community
-
-        self._connection = Snmpy(
-            self._host, self._snmp_public_auth, self._snmp_private_auth,
-            timeout=self.SNMP_TIMEOUT, retries=self.SNMP_RETRIES
+        self._transport = cmdgen.UdpTransportTarget(
+            (self._host, self.SNMP_PORT),
+            timeout=self.SNMP_TIMEOUT,
+            retries=self.SNMP_RETRIES
         )
-        self._connection.add_mib_path(getcwd())
-        self._connection.add_mib_path(path.dirname(path.abspath(__file__)))
-        self._connection.load_mibs(self.PREFIX)
+        self._public = cmdgen.CommunityData(
+            public_community, mpModel=self.SNMP_VERSION_2_2C
+        )
+        self._private = cmdgen.CommunityData(
+            private_community, mpModel=self.SNMP_VERSION_2_2C
+        )
 
         # Generic information (static)
-        self._identification = self._connection.get(
-            self._get_query_string(self.Q_NAME)
-        )
-        self._location = self._connection.get(
-            self._get_query_string(self.Q_LOCATION)
-        )
-        self._hardware_rev = self._connection.get(
-            self._get_query_string(self.Q_HARDWARE_REV)
-        )
-        self._firmware_rev = self._connection.get(
-            self._get_query_string(self.Q_FIRMWARE_REV)
-        )
+        self._identification = self.__get(self.Q_NAME)
+        self._location = self.__get(self.Q_LOCATION)
+        self._hardware_rev = self.__get(self.Q_HARDWARE_REV)
+        self._firmware_rev = self.__get(self.Q_FIRMWARE_REV)
         self._manufacture_date = datetime.strptime(
-            str(self._connection.get(
-                self._get_query_string(self.Q_MANUFACTURE_DATE))), "%m/%d/%Y"
+            str(self.__get(self.Q_MANUFACTURE_DATE)), "%m/%d/%Y"
         )
-        self._model_number = self._connection.get(
-            self._get_query_string(self.Q_MODEL_NUMBER)
-        )
-        self._serial_number = self._connection.get(
-            self._get_query_string(self.Q_SERIAL_NUMBER)
-        )
+        self._model_number = self.__get(self.Q_MODEL_NUMBER)
+        self._serial_number = self.__get(self.Q_SERIAL_NUMBER)
 
         # Device status (static)
-        self._num_outlets = self._connection.get(
-            self._get_query_string(self.Q_NUM_OUTLETS)
-        )
-        self._num_switched_outlets = self._connection.get(
-            self._get_query_string(self.Q_NUM_SWITCHED_OUTLETS)
-        )
-        self._num_metered_outlets = self._connection.get(
-            self._get_query_string(self.Q_NUM_METERED_OUTLETS)
-        )
-        self._max_current = self._connection.get(
-            self._get_query_string(self.Q_MAX_CURRENT_RATING)
-        )
+        self._num_outlets = self.__get(self.Q_NUM_OUTLETS)
+        self._num_switched_outlets = self.__get(self.Q_NUM_SWITCHED_OUTLETS)
+        self._num_metered_outlets = self.__get(self.Q_NUM_METERED_OUTLETS)
+        self._max_current = self.__get(self.Q_MAX_CURRENT_RATING)
 
         # Phase status (static)
         self._power_factor = 100
         self._current_factor = 10
-        self._phase_voltage = int(
-            self._connection.get(self._get_query_string(self.Q_PHASE_VOLTAGE))
-        )
+        self._phase_voltage = int(self.__get(self.Q_PHASE_VOLTAGE))
 
         self._use_centigrade = False
 
@@ -321,11 +320,7 @@ class APC(object):
 
         :return: one of ['lowLoad', 'normal', 'nearOverload', overload']
         """
-        state = int(
-            self._connection.get(
-                self._get_query_string(self.Q_PHASE_LOAD_STATE)
-            )
-        )
+        state = int(self.__get(self.Q_PHASE_LOAD_STATE))
         self._logger.info('Load state: %s', self.LOAD_STATES[state])
         return self.LOAD_STATES[state]
 
@@ -336,9 +331,7 @@ class APC(object):
         :return: current, in amps
         """
         current = float(
-            self._connection.get(
-                self._get_query_string(self.Q_PHASE_CURRENT)
-            ) / self._current_factor
+            self.__get(self.Q_PHASE_CURRENT) / self._current_factor
         )
         self._logger.info('Current: %.2f', current)
         return current
@@ -349,10 +342,7 @@ class APC(object):
 
         :return: power, in kW
         """
-        power = float(
-            self._connection.get(
-                self._get_query_string(self.Q_POWER)) / self._power_factor
-        )
+        power = float(self.__get(self.Q_POWER) / self._power_factor)
         self._logger.info('Power: %.2f', power)
         return power
 
@@ -362,9 +352,7 @@ class APC(object):
 
         :return: Is the sensor present?
         """
-        state = self._connection.get(
-            self._get_query_string(self.Q_SENSOR_TYPE)
-        )
+        state = self.__get(self.Q_SENSOR_TYPE)
         present = 1 < int(state) < 3
         self._logger.info('Sensor present: %s', str(present))
         return present
@@ -377,11 +365,7 @@ class APC(object):
         """
         name = None
         if self.is_sensor_present:
-            name = str(
-                self._connection.get(
-                    self._get_query_string(self.Q_SENSOR_NAME)
-                )
-            )
+            name = str(self.__get(self.Q_SENSOR_NAME))
         self._logger.info('Sensor name: %s', name)
         return name
 
@@ -393,9 +377,7 @@ class APC(object):
         :return:
         """
         if self.is_sensor_present:
-            self._connection.set(
-                self._get_query_string(self.Q_SENSOR_NAME_RW), name
-            )
+            self.__set(self.Q_SENSOR_NAME_RW, name)
             self._logger.info('Updating sensor name to: %s', name)
 
     @property
@@ -408,11 +390,7 @@ class APC(object):
         """
         index = 4
         if self.is_sensor_present:
-            index = int(
-                self._connection.get(
-                    self._get_query_string(self.Q_SENSOR_TYPE)
-                )
-            )
+            index = int(self.__get(self.Q_SENSOR_TYPE))
         self._logger.info('Sensor type: %s', self.SENSOR_TYPES[index])
         return self.SENSOR_TYPES[index]
 
@@ -424,13 +402,10 @@ class APC(object):
         """
         index = 1
         if self.is_sensor_present:
-            index = int(
-                self._connection.get(
-                    self._get_query_string(self.Q_SENSOR_COMM_STATUS)
-                )
-            )
-        self._logger.info('Sensor communication status: %s',
-                          self.SENSOR_STATUS_TYPES[index])
+            index = int(self.__get(self.Q_SENSOR_COMM_STATUS))
+        self._logger.info(
+            'Sensor communication status: %s', self.SENSOR_STATUS_TYPES[index]
+        )
         return self.SENSOR_STATUS_TYPES[index]
 
     @property
@@ -461,17 +436,9 @@ class APC(object):
         temp = 0.00
         if self.sensor_supports_temperature:
             if self._use_centigrade:
-                temp = float(
-                    self._connection.get(
-                        self._get_query_string(self.Q_SENSOR_TEMP_C)
-                    ) / 10
-                )
+                temp = float(self.__get(self.Q_SENSOR_TEMP_C) / 10)
             else:
-                temp = float(
-                    self._connection.get(
-                        self._get_query_string(self.Q_SENSOR_TEMP_F)
-                    ) / 10
-                )
+                temp = float(self.__get(self.Q_SENSOR_TEMP_F) / 10)
         self._logger.info('Temperature: %.2f', temp)
         return temp
 
@@ -483,11 +450,7 @@ class APC(object):
         """
         humid = 0.00
         if self.sensor_supports_humidity:
-            humid = float(
-                self._connection.get(
-                    self._get_query_string(self.Q_SENSOR_HUMIDITY)
-                )
-            )
+            humid = float(self.__get(self.Q_SENSOR_HUMIDITY))
         self._logger.info('Relative humidity: %.2f', humid)
         return humid
 
@@ -499,9 +462,7 @@ class APC(object):
         """
         index = 1
         if self.sensor_supports_temperature:
-            index = self._connection.get(
-                self._get_query_string(self.Q_SENSOR_TEMP_STATUS)
-            )
+            index = self.__get(self.Q_SENSOR_TEMP_STATUS)
         self._logger.info(
             'Temperature sensor status: %s', self.SENSOR_STATUS_TYPES[index]
         )
@@ -515,9 +476,7 @@ class APC(object):
         """
         index = 1
         if self.sensor_supports_humidity:
-            index = self._connection.get(
-                self._get_query_string(self.Q_SENSOR_HUMIDITY_STATUS)
-            )
+            index = self.__get(self.Q_SENSOR_HUMIDITY_STATUS)
         self._logger.info(
             'Relative humidity sensor status: %s',
             self.SENSOR_STATUS_TYPES[index]
@@ -531,11 +490,7 @@ class APC(object):
         :return: name of the outlet
         """
         if 1 <= outlet <= self._num_outlets:
-            name = str(
-                self._connection.get(
-                    self._get_query_string(self.Q_OUTLET_NAME, outlet)
-                )
-            )
+            name = str(self.__get(self.Q_OUTLET_NAME + (outlet, )))
             self._logger.info('Outlet number %d has name %s', outlet, name)
             return name
         else:
@@ -552,9 +507,7 @@ class APC(object):
         :return:
         """
         if 1 <= outlet <= self._num_outlets:
-            self._connection.set(
-                self._get_query_string(self.Q_OUTLET_NAME_RW, outlet), name
-            )
+            self.__set(self.Q_OUTLET_NAME_RW + (outlet,), name)
             self._logger.info(
                 'Updating outlet number %d to new name %s', outlet, name
             )
@@ -571,9 +524,7 @@ class APC(object):
         :return: status of the outlet, one of ['on', 'off']
         """
         if 1 <= outlet <= self._num_outlets:
-            state = self._connection.get(
-                self._get_query_string(self.Q_OUTLET_STATUS, outlet)
-            )
+            state = self.__get(self.Q_OUTLET_STATUS + (outlet,))
             self._logger.info(
                 'Outlet number %d has status %s', outlet,
                 self.OUTLET_STATUS_TYPES[state]
@@ -609,9 +560,8 @@ class APC(object):
             self._logger.info(
                 'Setting outlet %d to %s state', outlet, operation
             )
-            self._connection.set(
-                self._get_query_string(self.Q_OUTLET_COMMAND_RW, outlet),
-                operations[operation]
+            self.__set(
+                self.Q_OUTLET_COMMAND_RW + (outlet,), operations[operation]
             )
 
             try:
@@ -672,3 +622,36 @@ class APC(object):
         :return: was the state hit?
         """
         return self.outlet_status(outlet) is state
+
+    def __get(self, oid):
+        """Get a specific value from an OID in the SNMP tree.
+
+        :param oid: OID to get
+        :returns: value from the specified OID
+        """
+        (error_indication, _, _, var_binds) = cmdgen.CommandGenerator().getCmd(
+            self._public,
+            self._transport,
+            oid
+        )
+        if error_indication:
+            raise RuntimeError(self.ERROR_MSG % ('get', oid, self._host))
+
+        return var_binds[0][1]
+
+    def __set(self, oid, value):
+        """Set a specific value to an OID in the SNMP tree.
+
+        :param oid: OID to set
+        :param value: value to set
+        """
+        initial_value = self.__get(oid)
+        (error_indication, _, _, var_binds) = cmdgen.CommandGenerator().setCmd(
+            self._private,
+            self._transport,
+            (oid, initial_value.__init__(str(value)))
+        )
+        if error_indication:
+            raise RuntimeError(self.ERROR_MSG % ('set', oid, self._host))
+
+        return var_binds[0][1]

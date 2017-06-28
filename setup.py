@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pynoc',
-    version='1.4.3',
+    version='1.4.4',
 
     description='Network Operation Center gear',
     long_description='Python package to handle interact with various '
@@ -29,7 +29,6 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Topic :: System :: Hardware',
         'Topic :: System :: Networking',
     ],
@@ -48,7 +47,6 @@ setup(
     install_requires=[
         'six',
         'pysnmp',
-        'snmpy',
         'paramiko',
         'netaddr',
         'retrying',
