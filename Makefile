@@ -19,8 +19,14 @@ docs:
 build: docs
 	python setup.py sdist bdist_wheel --dist-dir dist --verbose
 
+install:
+	python setup.py install
+
+release:
+	python setup.py sdist upload -r pypi
+
 all: clean check docs build
 
 allwithtests: all test
 
-.PHONY: clean check test docs
+.PHONY: clean check test docs install release
