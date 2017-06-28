@@ -12,16 +12,16 @@ TEST_ENV_ENABLE_PASSWORD = "CISCO_ENABLE_PASSWORD"
 class TestCisco(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cisco_address = os.environ['TEST_ENV_IP_ADDRESS']
+        cisco_address = os.getenv('TEST_ENV_IP_ADDRESS', None)
         if cisco_address is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_IP_ADDRESS))
-        cisco_username = os.environ['TEST_ENV_USERNAME']
+        cisco_username = os.getenv('TEST_ENV_USERNAME', None)
         if cisco_username is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_USERNAME))
-        cisco_password = os.environ['TEST_ENV_PASSWORD']
+        cisco_password = os.getenv('TEST_ENV_PASSWORD', None)
         if cisco_password is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_PASSWORD))
-        cisco_enable_password = os.environ['TEST_ENV_ENABLE_PASSWORD']
+        cisco_enable_password = os.getenv('TEST_ENV_ENABLE_PASSWORD', None)
         if cisco_address is None:
             raise EnvironmentError(
                 ENV_NOT_SET.format(TEST_ENV_ENABLE_PASSWORD))
