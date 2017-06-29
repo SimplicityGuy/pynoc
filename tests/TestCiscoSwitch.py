@@ -3,7 +3,7 @@ import unittest
 from pynoc import CiscoSwitch
 
 ENV_NOT_SET = "Please set environment variable: {0}."
-TEST_ENV_IP_ADDRESS = "CISCO_IP_ADDRESS"
+TEST_CISCO_ENV_IP_ADDRESS = "CISCO_IP_ADDRESS"
 TEST_ENV_USERNAME = "CISCO_USERNAME"
 TEST_ENV_PASSWORD = "CISCO_PASSWORD"
 TEST_ENV_ENABLE_PASSWORD = "CISCO_ENABLE_PASSWORD"
@@ -12,9 +12,11 @@ TEST_ENV_ENABLE_PASSWORD = "CISCO_ENABLE_PASSWORD"
 class TestCisco(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cisco_address = os.getenv('TEST_ENV_IP_ADDRESS', None)
+        cisco_address = os.getenv('TEST_CISCO_ENV_IP_ADDRESS', None)
         if cisco_address is None:
-            raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_IP_ADDRESS))
+            raise EnvironmentError(
+                ENV_NOT_SET.format(TEST_CISCO_ENV_IP_ADDRESS)
+            )
         cisco_username = os.getenv('TEST_ENV_USERNAME', None)
         if cisco_username is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_USERNAME))
