@@ -60,7 +60,9 @@ class TestCisco(unittest.TestCase):
         self.assertEqual(shorthand, "Fa1/0/1")
         shorthand = self.cisco._shorthand_port_notation("GigabitEthernet1/0/1")
         self.assertEqual(shorthand, "Gi1/0/1")
-        shorthand = self.cisco._shorthand_port_notation("TenGigabitEthernet1/0/1")
+        shorthand = self.cisco._shorthand_port_notation(
+            "TenGigabitEthernet1/0/1"
+        )
         self.assertEqual(shorthand, "Ten1/0/1")
 
     def test_is_poe(self):
