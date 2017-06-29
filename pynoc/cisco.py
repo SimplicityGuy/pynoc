@@ -337,14 +337,13 @@ class CiscoSwitch(object):
         for command in commands:
             self._send_command(command[0], command[1])
 
-    def _send_command(self, command, signals, after=None, log=True):
+    def _send_command(self, command, signals, log=True):
         """Send a command to the SSH shell.
 
         Sends a command to the SSH shell and waits for the signals to arrive.
 
         :param command: command to send
         :param signals: signals to wait for
-        :param after: look for signals after this string
         :param log: specifies if this command should be logged
         :return: output of the command
         """
