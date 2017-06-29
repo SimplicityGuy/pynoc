@@ -137,10 +137,11 @@ class CiscoSwitch(object):
 
         :return: IPDT information
         """
-        if self._ready:
-            output = self._send_command(self.CMD_IPDT, self.CMD_IPDT_SIGNALS)
-            return CiscoSwitch._parse_ipdt_output(output)
-        return None
+        if not self._ready:
+            return None
+
+        output = self._send_command(self.CMD_IPDT, self.CMD_IPDT_SIGNALS)
+        return self._parse_ipdt_output(output)
 
     def mac_address_table(self, ignore_port=None):
         """MAC Address Table Information.
@@ -395,7 +396,7 @@ class CiscoSwitch(object):
         return version
 
     def _parse_mac_address_table_output(self, output, ignore_port=None):
-        """Mac Address Table parsing.
+        """MAC Address Table parsing.
 
         Parses the output of 'sh mac address-table' command.
 
@@ -442,13 +443,12 @@ class CiscoSwitch(object):
             lookup.append(
                 {
                     'mac': EUI(values[1], dialect=mac_unix_expanded),
-                    'interface': values[3]
+                    'interface': self._shorthand_port_notation(values[3])
                 }
             )
         return sorted(lookup, key=lambda k: k['interface'])
 
-    @staticmethod
-    def _parse_ipdt_output(output):
+    def _parse_ipdt_output(self, output):
         """IPDT output parsing.
 
         Parses the output of the `show ip device track` command.
@@ -493,7 +493,7 @@ class CiscoSwitch(object):
                 {
                     'ip': values[0],
                     'mac': EUI(values[1], dialect=mac_unix_expanded),
-                    'interface': values[3]
+                    'interface': self._shorthand_port_notation(values[3])
                 }
             )
         return sorted(lookup, key=lambda k: k['interface'])
@@ -535,10 +535,13 @@ class CiscoSwitch(object):
 
             values = [entry for entry in line.split() if entry]
 
-            if values[0] == port:
-                matches = state in values[1]
-                actual_state = values[1]
-                break
+            # Is this the port of interest?
+            if values[0] != port:
+                continue
+
+            matches = state in values[1]
+            actual_state = values[1]
+            break
 
         return matches, actual_state
 
@@ -564,7 +567,6 @@ class CiscoSwitch(object):
         matches = False
         lines = [line.strip() for line in output.splitlines()]
         lines.append('')
-        previous_vlan = -1
         actual_vlan = -1
         while len(lines) > 0:
             line = lines.pop(0).replace(',', '')
@@ -577,14 +579,16 @@ class CiscoSwitch(object):
 
             values = [entry for entry in line.split() if entry]
             if 'active' in values:
-                previous_vlan = int(values[0])
+                actual_vlan = int(values[0])
                 ports = values[3:]
             else:
                 ports = values
 
-            if port in ports:
-                actual_vlan = previous_vlan
-                if previous_vlan == vlan:
-                    matches = True
+            # Is the port of interest in the list of ports?
+            if port not in ports:
+                continue
+
+            if actual_vlan == vlan:
+                matches = True
 
         return matches, actual_vlan
