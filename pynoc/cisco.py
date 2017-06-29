@@ -137,10 +137,11 @@ class CiscoSwitch(object):
 
         :return: IPDT information
         """
-        if self._ready:
-            output = self._send_command(self.CMD_IPDT, self.CMD_IPDT_SIGNALS)
-            return self._parse_ipdt_output(output)
-        return None
+        if not self._ready:
+            return None
+
+        output = self._send_command(self.CMD_IPDT, self.CMD_IPDT_SIGNALS)
+        return self._parse_ipdt_output(output)
 
     def mac_address_table(self, ignore_port=None):
         """MAC Address Table Information.
