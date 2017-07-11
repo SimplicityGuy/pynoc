@@ -124,7 +124,7 @@ class CiscoSwitch(object):
         :return: IPDT information
         """
         if not self.connected:
-            return
+            return None
 
         output = self._send_command(self.CMD_IPDT)
         return self._parse_ipdt_output(output)
@@ -136,7 +136,7 @@ class CiscoSwitch(object):
         :return: ARP information
         """
         if not self.connected:
-            return
+            return None
 
         output = self._send_command(self.CMD_MAC_ADDRESS_TABLE)
         return self._parse_mac_address_table_output(
@@ -150,7 +150,7 @@ class CiscoSwitch(object):
         :return: True if the command succeeded, False otherwise
         """
         if not self.connected:
-            return
+            return False
 
         port = self._shorthand_port_notation(port)
         cmds = [self.CMD_CONFIGURE_INTERFACE.format(port), self.CMD_POWER_ON]
@@ -167,7 +167,7 @@ class CiscoSwitch(object):
         :return: True if the command succeeded, False otherwise
         """
         if not self.connected:
-            return
+            return False
 
         port = self._shorthand_port_notation(port)
         cmds = [self.CMD_CONFIGURE_INTERFACE.format(port), self.CMD_POWER_OFF]
@@ -234,7 +234,7 @@ class CiscoSwitch(object):
         :return: The Cisco IOS version.
         """
         if not self.connected:
-            return
+            return None
 
         if self._version is None:
             output = self._send_command(self.CMD_VERSION)
