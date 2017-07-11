@@ -12,18 +12,18 @@ TEST_ENV_ENABLE_PASSWORD = "CISCO_ENABLE_PASSWORD"
 class TestCisco(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cisco_address = os.getenv('TEST_CISCO_ENV_IP_ADDRESS', None)
+        cisco_address = os.getenv(TEST_CISCO_ENV_IP_ADDRESS, None)
         if cisco_address is None:
             raise EnvironmentError(
                 ENV_NOT_SET.format(TEST_CISCO_ENV_IP_ADDRESS)
             )
-        cisco_username = os.getenv('TEST_ENV_USERNAME', None)
+        cisco_username = os.getenv(TEST_ENV_USERNAME, None)
         if cisco_username is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_USERNAME))
-        cisco_password = os.getenv('TEST_ENV_PASSWORD', None)
+        cisco_password = os.getenv(TEST_ENV_PASSWORD, None)
         if cisco_password is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_PASSWORD))
-        cisco_enable_password = os.getenv('TEST_ENV_ENABLE_PASSWORD', None)
+        cisco_enable_password = os.getenv(TEST_ENV_ENABLE_PASSWORD, None)
         if cisco_address is None:
             raise EnvironmentError(
                 ENV_NOT_SET.format(TEST_ENV_ENABLE_PASSWORD))
@@ -72,4 +72,15 @@ class TestCisco(unittest.TestCase):
         self.assertIsNot(self.cisco.vlan("Gi1/0/1"), -1)
 
     def test_zzz_disconnect(self):
+        self.assertTrue(self.cisco.connected)
+        self.cisco.disconnect()
+        self.assertFalse(self.cisco.connected)
+
+    def test_00_vlan(self):
+        self.assertFalse(self.cisco.connected)
+        self.cisco.connect()
+        self.assertTrue(self.cisco.connected)
+        self.cisco.enable(self.cisco_enable_password)
+        self.cisco.set_terminal_length()
+        self.assertIsNot(self.cisco.vlan("Gi1/0/1"), -1)
         self.cisco.disconnect()

@@ -11,14 +11,14 @@ TEST_ENV_PRIVATE_COMMUNITY = "APC_PRIVATE_COMMUNITY"
 class TestAPC(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        apc_address = os.getenv('TEST_APC_ENV_IP_ADDRESS', None)
+        apc_address = os.getenv(TEST_APC_ENV_IP_ADDRESS, None)
         if apc_address is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_APC_ENV_IP_ADDRESS))
-        public_community = os.getenv('TEST_ENV_PUBLIC_COMMUNITY', None)
+        public_community = os.getenv(TEST_ENV_PUBLIC_COMMUNITY, None)
         if public_community is None:
             raise EnvironmentError(
                 ENV_NOT_SET.format(TEST_ENV_PUBLIC_COMMUNITY))
-        private_community = os.getenv('TEST_ENV_PRIVATE_COMMUNITY', None)
+        private_community = os.getenv(TEST_ENV_PRIVATE_COMMUNITY, None)
         if private_community is None:
             raise EnvironmentError(
                 ENV_NOT_SET.format(TEST_ENV_PRIVATE_COMMUNITY))
