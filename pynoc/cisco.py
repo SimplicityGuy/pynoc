@@ -8,7 +8,7 @@ from netmiko import ConnectHandler
 
 
 def deprecated(func):
-    """Deprecated decorator.
+    """Decorate a deprecated function to warn when it is called.
 
     This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emitted
@@ -104,14 +104,10 @@ class CiscoSwitch(object):
         :param password: password to use to enable
         :return:
         """
-        if self.connected:
-            self.disconnect()
+        if not self.connected:
+            return
 
-        self._client = ConnectHandler(
-            device_type='cisco_ios', ip=self._host, username=self._username,
-            password=self._password, secret=password
-        )
-
+        self._client.secret = password
         self._client.enable()
 
     @deprecated
