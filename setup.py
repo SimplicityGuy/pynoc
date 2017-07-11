@@ -45,10 +45,9 @@ setup(
     packages=find_packages(exclude=['contrib', 'docs', 'test*']),
 
     install_requires=[
-        'six',
         'pysnmp',
-        'paramiko',
         'netaddr',
+        'netmiko',
         'retrying',
     ],
 

@@ -2,4 +2,3 @@ pysnmp
 netaddr
 netmiko
 retrying
-six
