@@ -12,23 +12,24 @@ TEST_ENV_ENABLE_PASSWORD = "CISCO_ENABLE_PASSWORD"
 class TestCisco(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cisco_address = os.getenv('TEST_CISCO_ENV_IP_ADDRESS', None)
+        cisco_address = os.getenv(TEST_CISCO_ENV_IP_ADDRESS, None)
         if cisco_address is None:
             raise EnvironmentError(
                 ENV_NOT_SET.format(TEST_CISCO_ENV_IP_ADDRESS)
             )
-        cisco_username = os.getenv('TEST_ENV_USERNAME', None)
+        cisco_username = os.getenv(TEST_ENV_USERNAME, None)
         if cisco_username is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_USERNAME))
-        cisco_password = os.getenv('TEST_ENV_PASSWORD', None)
+        cisco_password = os.getenv(TEST_ENV_PASSWORD, None)
         if cisco_password is None:
             raise EnvironmentError(ENV_NOT_SET.format(TEST_ENV_PASSWORD))
-        cisco_enable_password = os.getenv('TEST_ENV_ENABLE_PASSWORD', None)
+        cisco_enable_password = os.getenv(TEST_ENV_ENABLE_PASSWORD, None)
         if cisco_address is None:
             raise EnvironmentError(
                 ENV_NOT_SET.format(TEST_ENV_ENABLE_PASSWORD))
         cls.cisco_enable_password = cisco_enable_password
         cls.cisco = CiscoSwitch(cisco_address, cisco_username, cisco_password)
+        cls.port = "Gi1/0/1"
 
     @classmethod
     def tearDownClass(cls):
@@ -66,10 +67,39 @@ class TestCisco(unittest.TestCase):
         self.assertEqual(shorthand, "Ten1/0/1")
 
     def test_is_poe(self):
-        self.assertIsNotNone(self.cisco.is_poe("Gi1/0/1"))
+        self.assertIsNotNone(self.cisco.is_poe(self.port))
 
     def test_vlan(self):
-        self.assertIsNot(self.cisco.vlan("Gi1/0/1"), -1)
+        self.assertIsNot(self.cisco.vlan(self.port), -1)
+
+    def test_version_1(self):
+        self.assertIsNotNone(self.cisco.version)
+
+    def test_version_2(self):
+        self.assertIsNotNone(self.cisco.version)
 
     def test_zzz_disconnect(self):
+        self.assertTrue(self.cisco.connected)
         self.cisco.disconnect()
+        self.assertFalse(self.cisco.connected)
+
+    def test_00_standalone_vlan(self):
+        self.assertFalse(self.cisco.connected)
+        self.cisco.connect()
+        self.assertTrue(self.cisco.connected)
+        self.cisco.enable(self.cisco_enable_password)
+        self.cisco.set_terminal_length()
+        self.assertIsNot(self.cisco.vlan(self.port), -1)
+        self.cisco.disconnect()
+
+    def test_00_defs_while_disconnected(self):
+        self.assertFalse(self.cisco.connected)
+        self.cisco.enable(self.cisco_enable_password)
+        self.cisco.set_terminal_length()
+        self.assertIs(self.cisco.vlan(self.port), -1)
+        self.assertIsNone(self.cisco.ipdt())
+        self.assertIsNone(self.cisco.mac_address_table())
+        self.assertIsNone(self.cisco.version)
+        self.assertFalse(self.cisco.poe_on(self.port))
+        self.assertFalse(self.cisco.poe_off(self.port))
+        self.assertIs(self.cisco.is_poe(self.port), "unknown")

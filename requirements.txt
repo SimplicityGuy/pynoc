@@ -1,5 +1,4 @@
 pysnmp
 netaddr
-paramiko
+netmiko
 retrying
-six

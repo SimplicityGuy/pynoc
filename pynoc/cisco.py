@@ -1,10 +1,32 @@
 """Cisco Switch control object."""
 
 import logging
+import warnings
 
-from six import PY3
 from netaddr import EUI, mac_unix_expanded
-from paramiko import SSHClient, AutoAddPolicy
+from netmiko import ConnectHandler
+
+
+def deprecated(func):
+    """Decorate a deprecated function to warn when it is called.
+
+    This is a decorator which can be used to mark functions
+    as deprecated. It will result in a warning being emitted
+    when the function is used.
+    """
+    def new_func(*args, **kwargs):
+        """Set the warning message."""
+        warnings.warn(
+            "Call to deprecated function {}.".format(func.__name__),
+            category=DeprecationWarning
+        )
+        return func(*args, **kwargs)
+
+    new_func.__name__ = func.__name__
+    new_func.__doc__ = func.__doc__
+    new_func.__dict__.update(func.__dict__)
+
+    return new_func
 
 
 class CiscoSwitch(object):
@@ -15,38 +37,24 @@ class CiscoSwitch(object):
 
     MAX_COMMAND_READ = 16
 
-    CMD_LOGIN_SIGNALS = ['>', '#']
-    CMD_GENERIC_SIGNALS = ['#']
-
-    CMD_ENABLE = 'enable'
-    CMD_ENABLE_SIGNALS = ['Password']
-
     CMD_VERSION = 'sh version'
     CMD_VERSION_SIGNALS = ['BOOTLDR']
 
-    CMD_TERMINAL_LENGTH = 'terminal length 0'
-
     CMD_IPDT = 'sh ip device track all'
-    CMD_IPDT_SIGNALS = ['Enabled interfaces']
 
     CMD_MAC_ADDRESS_TABLE = 'sh mac address-table'
-    CMD_MAC_ADDRESS_TABLE_SIGNALS = ['Total Mac Addresses']
-
-    CMD_CONFIGURE = 'configure terminal'
-    CMD_CONFIGURE_INTERFACE = 'int {0}'
-    CMD_CONFIGURE_SIGNALS = ['(config)#', '(config-if)#']
 
     CMD_POWER_OFF = 'power inline never'
     CMD_POWER_ON = 'power inline auto'
     CMD_POWER_SHOW = 'sh power inline'
 
+    CMD_CONFIGURE_INTERFACE = 'int {0}'
+
     CMD_VLAN_MODE_ACCESS = 'switchport mode access'
     CMD_VLAN_SET = 'switchport access vlan {0}'
     CMD_VLAN_SHOW = 'sh vlan'
 
-    CMD_CARRIAGE_RETURN = ''
-
-    CMD_END = 'end'
+    CMD_CARRIAGE_RETURN = '\n'
 
     PORT_NOTATION = {
         'fastethernet': 'Fa',
@@ -67,9 +75,6 @@ class CiscoSwitch(object):
         self._username = username
         self._password = password
         self._client = None
-        self._shell = None
-        self._enable_needed = False
-        self._ready = False
 
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(logging.NullHandler())
@@ -79,23 +84,10 @@ class CiscoSwitch(object):
 
         :return:
         """
-        self._client = SSHClient()
-        self._client.set_missing_host_key_policy(AutoAddPolicy())
-        self._client.connect(self._host,
-                             username=self._username,
-                             password=self._password,
-                             allow_agent=False,
-                             look_for_keys=False)
-        self._shell = self._client.invoke_shell()
-        self._ready = True
-        output = self._send_command(
-            self.CMD_CARRIAGE_RETURN, self.CMD_LOGIN_SIGNALS
+        self._client = ConnectHandler(
+            device_type='cisco_ios', ip=self._host, username=self._username,
+            password=self._password
         )
-        if output.find('>') > 0:
-            self._enable_needed = True
-            self._ready = False
-        else:
-            self.set_terminal_length()
 
     def disconnect(self):
         """Disconnect from the switch.
@@ -103,10 +95,8 @@ class CiscoSwitch(object):
         :return:
         """
         if self._client is not None:
-            self._client.close()
+            self._client.disconnect()
             self._client = None
-            self._shell = None
-            self._ready = False
 
     def enable(self, password):
         """Put the switch in enable mode.
@@ -114,33 +104,29 @@ class CiscoSwitch(object):
         :param password: password to use to enable
         :return:
         """
-        if self.connected and self._enable_needed:
-            self._send_command(self.CMD_ENABLE, self.CMD_ENABLE_SIGNALS)
-            self._send_command(
-                password, self.CMD_GENERIC_SIGNALS, log=False
-            )
-            self._ready = True
-            self.set_terminal_length()
+        if not self.connected:
+            return
 
+        self._client.secret = password
+        self._client.enable()
+
+    @deprecated
     def set_terminal_length(self):
         """Set terminal length.
 
         :return:
         """
-        if not self._ready:
-            return
-
-        self._send_command(self.CMD_TERMINAL_LENGTH, self.CMD_GENERIC_SIGNALS)
+        pass
 
     def ipdt(self):
         """IP Device Tracking (IPDT) information.
 
         :return: IPDT information
         """
-        if not self._ready:
+        if not self.connected:
             return None
 
-        output = self._send_command(self.CMD_IPDT, self.CMD_IPDT_SIGNALS)
+        output = self._send_command(self.CMD_IPDT)
         return self._parse_ipdt_output(output)
 
     def mac_address_table(self, ignore_port=None):
@@ -149,12 +135,10 @@ class CiscoSwitch(object):
         :param ignore_port: port to ignore, e.g. Gi1/0/48
         :return: ARP information
         """
-        if not self._ready:
+        if not self.connected:
             return None
 
-        output = self._send_command(
-            self.CMD_MAC_ADDRESS_TABLE, self.CMD_MAC_ADDRESS_TABLE_SIGNALS
-        )
+        output = self._send_command(self.CMD_MAC_ADDRESS_TABLE)
         return self._parse_mac_address_table_output(
             output, ignore_port=ignore_port
         )
@@ -165,22 +149,14 @@ class CiscoSwitch(object):
         :param port: port to enable POE on, e.g. Gi1/0/1
         :return: True if the command succeeded, False otherwise
         """
-        if not self._ready:
-            return
+        if not self.connected:
+            return False
 
         port = self._shorthand_port_notation(port)
-        cmds = [
-            (self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_CONFIGURE_INTERFACE.format(port),
-             self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_POWER_ON, self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_END, self.CMD_GENERIC_SIGNALS)
-        ]
-        self._send_commands(cmds)
+        cmds = [self.CMD_CONFIGURE_INTERFACE.format(port), self.CMD_POWER_ON]
+        self._send_config(cmds)
 
-        verify = self._send_command(
-            self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
-        )
+        verify = self._send_command(self.CMD_POWER_SHOW)
         matches, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
         return matches
 
@@ -190,22 +166,14 @@ class CiscoSwitch(object):
         :param port: port to disable POE on, e.g. Gi1/0/1
         :return: True if the command succeeded, False otherwise
         """
-        if not self._ready:
-            return
+        if not self.connected:
+            return False
 
         port = self._shorthand_port_notation(port)
-        cmds = [
-            (self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_CONFIGURE_INTERFACE.format(port),
-             self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_POWER_OFF, self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_END, self.CMD_GENERIC_SIGNALS)
-        ]
-        self._send_commands(cmds)
+        cmds = [self.CMD_CONFIGURE_INTERFACE.format(port), self.CMD_POWER_OFF]
+        self._send_config(cmds)
 
-        verify = self._send_command(
-            self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
-        )
+        verify = self._send_command(self.CMD_POWER_SHOW)
         matches, _ = CiscoSwitch._verify_poe_status(verify, port, "off")
         return matches
 
@@ -215,13 +183,11 @@ class CiscoSwitch(object):
         :param port: port to determine state of, e.g. Gi1/0/1
         :return: True if POE is enabled, False otherwise
         """
-        if not self._ready:
+        if not self.connected:
             return "unknown"
 
         port = self._shorthand_port_notation(port)
-        verify = self._send_command(
-            self.CMD_POWER_SHOW, self.CMD_GENERIC_SIGNALS
-        )
+        verify = self._send_command(self.CMD_POWER_SHOW)
         _, poe = CiscoSwitch._verify_poe_status(verify, port, "unknown")
         return "auto" in poe
 
@@ -232,23 +198,18 @@ class CiscoSwitch(object):
         :param vlan: VLAN id
         :return: True if the command succeeded, False otherwise
         """
-        if not self._ready:
+        if not self.connected:
             return
 
         port = self._shorthand_port_notation(port)
         cmds = [
-            (self.CMD_CONFIGURE, self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_CONFIGURE_INTERFACE.format(port),
-             self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_VLAN_MODE_ACCESS, self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_VLAN_SET.format(int(vlan)), self.CMD_CONFIGURE_SIGNALS),
-            (self.CMD_END, self.CMD_GENERIC_SIGNALS)
+            self.CMD_CONFIGURE_INTERFACE.format(port),
+            self.CMD_VLAN_MODE_ACCESS,
+            self.CMD_VLAN_SET.format(int(vlan))
         ]
-        self._send_commands(cmds)
+        self._send_config(cmds)
 
-        verify = self._send_command(
-            self.CMD_VLAN_SHOW, self.CMD_GENERIC_SIGNALS
-        )
+        verify = self._send_command(self.CMD_VLAN_SHOW)
         matches, _ = CiscoSwitch._verify_vlan_status(verify, port, int(vlan))
         return matches
 
@@ -258,13 +219,11 @@ class CiscoSwitch(object):
         :param port: port to determine VLAN assignment on, e.g. Gi1/0/1
         :return: VLAN id
         """
-        if not self._ready:
+        if not self.connected:
             return -1
 
         port = self._shorthand_port_notation(port)
-        verify = self._send_command(
-            self.CMD_VLAN_SHOW, self.CMD_GENERIC_SIGNALS
-        )
+        verify = self._send_command(self.CMD_VLAN_SHOW)
         _, vlan = CiscoSwitch._verify_vlan_status(verify, port, 0)
         return vlan
 
@@ -274,12 +233,13 @@ class CiscoSwitch(object):
 
         :return: The Cisco IOS version.
         """
+        if not self.connected:
+            return None
+
         if self._version is None:
-            if self._ready:
-                output = self._send_command(
-                    self.CMD_VERSION, self.CMD_VERSION_SIGNALS
-                )
-                self._version = self._parse_version_output(output)
+            output = self._send_command(self.CMD_VERSION)
+            self._version = self._parse_version_output(output)
+
         return self._version
 
     @property
@@ -296,15 +256,17 @@ class CiscoSwitch(object):
 
         :return: has a connection to the switch been made?
         """
-        if self._shell is None:
+        if self._client is None:
             return False
 
-        output = self._send_command(
-            self.CMD_CARRIAGE_RETURN, self.CMD_LOGIN_SIGNALS
-        )
-        active_ssh = any(
-            signal in output for signal in self.CMD_LOGIN_SIGNALS
-        )
+        self._send_command(self.CMD_CARRIAGE_RETURN)
+
+        active_ssh = True
+        try:
+            self._client.find_prompt()
+        except ValueError:
+            active_ssh = False
+
         return active_ssh
 
     def _shorthand_port_notation(self, port):
@@ -316,7 +278,7 @@ class CiscoSwitch(object):
         :param port: port name
         :return: shorthand port name
         """
-        if not port:
+        if port is None:
             return
 
         lower = port.lower()
@@ -330,45 +292,35 @@ class CiscoSwitch(object):
 
         return output
 
-    def _send_commands(self, commands):
-        """Send a list of commands to the SSH shell.
+    def _send_command(self, command):
+        """Send command.
 
-        :param commands: list of commands
-        """
-        for command in commands:
-            self._send_command(command[0], command[1])
-
-    def _send_command(self, command, signals, log=True):
-        """Send a command to the SSH shell.
-
-        Sends a command to the SSH shell and waits for the signals to arrive.
+        Sends a command to the switch.
 
         :param command: command to send
-        :param signals: signals to wait for
-        :param log: specifies if this command should be logged
         :return: output of the command
         """
-        send_command = command + '\n'
-        if log:
-            self._logger.info('Sending command: %s', send_command.strip())
+        read_buffer = ""
+        if self._client is None:
+            return read_buffer
 
-        self._shell.send(send_command)
-
-        read_buffer = ''
-        while not any(read_buffer.find(signal) > -1 for signal in signals):
-            read = self._shell.recv(self.MAX_COMMAND_READ)
-            if PY3:  # If running in python3, convert byte string to native str
-                read = read.decode()
-            read_buffer += read
-
-        if log:
-            self._logger.debug('Received output: %s', read_buffer)
-
-        # Manually flush the rest of the buffer.
-        while self._shell.recv_ready():
-            self._shell.recv(self.MAX_COMMAND_READ)
+        self._client.clear_buffer()
+        read_buffer = self._client.send_command(command)
 
         return read_buffer
+
+    def _send_config(self, configs):
+        """Configure switch.
+
+        Sends a series of configuration options to the switch.
+
+        :param configs: config commands
+        """
+        if self._client is None:
+            return
+
+        self._client.clear_buffer()
+        self._client.send_config_set(configs)
 
     @staticmethod
     def _parse_version_output(output):
@@ -568,6 +520,7 @@ class CiscoSwitch(object):
         lines = [line.strip() for line in output.splitlines()]
         lines.append('')
         actual_vlan = -1
+        current_vlan = -1
         while len(lines) > 0:
             line = lines.pop(0).replace(',', '')
 
@@ -579,7 +532,7 @@ class CiscoSwitch(object):
 
             values = [entry for entry in line.split() if entry]
             if 'active' in values:
-                actual_vlan = int(values[0])
+                current_vlan = int(values[0])
                 ports = values[3:]
             else:
                 ports = values
@@ -588,6 +541,7 @@ class CiscoSwitch(object):
             if port not in ports:
                 continue
 
+            actual_vlan = current_vlan
             if actual_vlan == vlan:
                 matches = True
 
