@@ -137,8 +137,18 @@ class TestAPC(unittest.TestCase):
         for num in range(1, self.apc.num_outlets + 1):
             self.assertIsNotNone(self.apc.get_outlet_name(num))
 
-    def test_outlet_status(self):
+    def test_set_outlet_name(self):
+        for num in range(1, self.apc.num_outlets + 1):
+            old = self.apc.get_outlet_name(num)
+            self.apc.set_outlet_name(num, old)
+
+    def test_get_outlet_status(self):
         for num in range(1, self.apc.num_outlets + 1):
             self.assertIsNotNone(self.apc.outlet_status(num))
             self.assertIn(self.apc.outlet_status(num),
                           ['off', 'on'])
+
+    def test_set_outlet_status(self):
+        for num in range(1, self.apc.num_outlets + 1):
+            old = self.apc.outlet_status(num)
+            self.apc.outlet_command(num, old)

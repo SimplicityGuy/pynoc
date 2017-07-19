@@ -3,7 +3,8 @@
 import logging
 from datetime import datetime
 
-import pysnmp.entity.rfc3413.oneliner.cmdgen as cmdgen
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+from pysnmp.proto import rfc1902
 from retrying import retry, RetryError
 
 
@@ -15,7 +16,7 @@ class APC(object):
     # This class requires more attributes and public methods to cover the
     # functionality of the device.
 
-    ERROR_MSG = 'SNMP%s of %s on %s failed.'
+    ERROR_MSG = 'SNMP {} of {} on {} failed.'
 
     SNMP_VERSION_2_2C = 1
     SNMP_PORT = 161
@@ -490,7 +491,7 @@ class APC(object):
         :return: name of the outlet
         """
         if 1 <= outlet <= self._num_outlets:
-            name = str(self.__get(self.Q_OUTLET_NAME + (outlet, )))
+            name = str(self.__get(self.Q_OUTLET_NAME + (outlet,)))
             self._logger.info('Outlet number %d has name %s', outlet, name)
             return name
         else:
@@ -635,7 +636,7 @@ class APC(object):
             oid
         )
         if error_indication:
-            raise RuntimeError(self.ERROR_MSG % ('get', oid, self._host))
+            raise RuntimeError(self.ERROR_MSG.format('get', oid, self._host))
 
         return var_binds[0][1]
 
@@ -646,12 +647,51 @@ class APC(object):
         :param value: value to set
         """
         initial_value = self.__get(oid)
+        new_value = self.__coerce_value(initial_value, value)
+
         (error_indication, _, _, var_binds) = cmdgen.CommandGenerator().setCmd(
             self._private,
             self._transport,
-            (oid, initial_value.__init__(str(value)))
+            (oid, new_value)
         )
         if error_indication:
-            raise RuntimeError(self.ERROR_MSG % ('set', oid, self._host))
+            raise RuntimeError(self.ERROR_MSG.format('set', oid, self._host))
 
         return var_binds[0][1]
+
+    @staticmethod
+    def __coerce_value(initial_value, new_value):
+        """Coerce the new_value to the same type as the initial_value.
+
+        Unfortunately this is a bit of a workaround for the more elegant
+        version:
+        `return initial_value.__init__(str(new_value))`
+        Utilizing that more elegant version yields an SmiError:
+        MIB object ObjectIdentity((...)) is not OBJECT-TYPE (MIB not loaded?)
+
+        :param initial_value: initial value from the device
+        :param new_value: new value to set, coerced into the right type
+        :return: new value, coerced into the right type
+        """
+        if isinstance(initial_value, rfc1902.Counter32):
+            set_value = rfc1902.Counter32(str(new_value))
+        elif isinstance(initial_value, rfc1902.Counter64):
+            set_value = rfc1902.Counter64(str(new_value))
+        elif isinstance(initial_value, rfc1902.Gauge32):
+            set_value = rfc1902.Gauge32(str(new_value))
+        elif isinstance(initial_value, rfc1902.Integer):
+            set_value = rfc1902.Integer(str(new_value))
+        elif isinstance(initial_value, rfc1902.Integer32):
+            set_value = rfc1902.Integer32(str(new_value))
+        elif isinstance(initial_value, rfc1902.IpAddress):
+            set_value = rfc1902.IpAddress(str(new_value))
+        elif isinstance(initial_value, rfc1902.OctetString):
+            set_value = rfc1902.OctetString(str(new_value))
+        elif isinstance(initial_value, rfc1902.TimeTicks):
+            set_value = rfc1902.TimeTicks(str(new_value))
+        elif isinstance(initial_value, rfc1902.Unsigned32):
+            set_value = rfc1902.Unsigned32(str(new_value))
+        else:
+            raise RuntimeError('Unknown type: {}'.format(type(initial_value)))
+
+        return set_value
