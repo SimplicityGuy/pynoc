@@ -199,7 +199,7 @@ class CiscoSwitch(object):
         :return: True if the command succeeded, False otherwise
         """
         if not self.connected:
-            return
+            return False
 
         port = self._shorthand_port_notation(port)
         cmds = [
@@ -279,7 +279,7 @@ class CiscoSwitch(object):
         :return: shorthand port name
         """
         if port is None:
-            return
+            return ""
 
         lower = port.lower()
         output = port
@@ -389,7 +389,7 @@ class CiscoSwitch(object):
             # If the ignore_port is specified and is the port in question,
             # ignore it.
             ignore_port = self._shorthand_port_notation(ignore_port)
-            if ignore_port and values[3] == ignore_port:
+            if ignore_port == "" or values[3] == ignore_port:
                 continue
 
             lookup.append(
