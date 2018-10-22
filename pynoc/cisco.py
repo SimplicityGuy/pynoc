@@ -46,6 +46,7 @@ class CiscoSwitch(object):
 
     CMD_POWER_OFF = 'power inline never'
     CMD_POWER_ON = 'power inline auto'
+    CMD_POWER_LIMIT = 'power inline auto max {0}'
     CMD_POWER_SHOW = 'sh power inline'
 
     CMD_CONFIGURE_INTERFACE = 'int {0}'
@@ -175,6 +176,26 @@ class CiscoSwitch(object):
 
         verify = self._send_command(self.CMD_POWER_SHOW)
         matches, _ = CiscoSwitch._verify_poe_status(verify, port, "off")
+        return matches
+
+    def poe_limit(self, port, milliwatts_limit):
+        """Enable a port for POE, but limit the maximum wattage.
+
+        :param port: port to enable POE on, e.g. Gi1/0/1
+        :param milliwatts_limit: the maximum wattage,
+            given in milliwatts, e.g. 15400. Cisco documentation
+            gives 4000 to 30000 as the valid range.
+        """
+        if not self.connected:
+            return False
+
+        port = self._shorthand_port_notation(port)
+        cmds = [self.CMD_CONFIGURE_INTERFACE.format(port),
+                self.CMD_POWER_LIMIT.format(milliwatts_limit)]
+        self._send_config(cmds)
+
+        verify = self._send_command(self.CMD_POWER_SHOW)
+        matches, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
         return matches
 
     def is_poe(self, port):
