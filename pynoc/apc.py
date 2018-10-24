@@ -496,9 +496,8 @@ class APC(object):
             return name
         else:
             raise IndexError(
-                'Only %d outlets exist. "%s" is an invalid outlet.',
-                self._num_outlets, str(outlet)
-            )
+                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                    self._num_outlets, str(outlet)))
 
     def set_outlet_name(self, outlet, name):
         """Update the name of an outlet in the PDU.
@@ -514,9 +513,8 @@ class APC(object):
             )
         else:
             raise IndexError(
-                'Only %d outlets exist. "%s" is an invalid outlet.',
-                self._num_outlets, str(outlet)
-            )
+                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                    self._num_outlets, str(outlet)))
 
     def outlet_status(self, outlet):
         """Determine the status of the outlet in the PDU.
@@ -533,9 +531,8 @@ class APC(object):
             return self.OUTLET_STATUS_TYPES[state]
         else:
             raise IndexError(
-                'Only %d outlets exist. "%s" is an invalid outlet.',
-                self._num_outlets, str(outlet)
-            )
+                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                    self._num_outlets, str(outlet)))
 
     def outlet_command(self, outlet, operation):
         """Send command to an outlet in the PDU.
@@ -547,9 +544,8 @@ class APC(object):
         valid_operations = ['on', 'off', 'reboot']
         if operation not in valid_operations:
             raise ValueError(
-                '"%s" is an invalid operation. Valid operations are: %s',
-                str(operation), str(valid_operations)
-            )
+                '"{}" is an invalid operation. Valid operations are: {}'.format(
+                    str(operation), str(valid_operations)))
 
         operations = {
             'on': 1,
@@ -578,9 +574,8 @@ class APC(object):
             return success
         else:
             raise IndexError(
-                'Only %d outlets exist. "%s" is an invalid outlet.',
-                self._num_outlets, str(outlet)
-            )
+                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                    self._num_outlets, str(outlet)))
 
     @property
     def sensor_supports_temperature(self):

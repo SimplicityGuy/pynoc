@@ -46,6 +46,7 @@ class CiscoSwitch(object):
 
     CMD_POWER_OFF = 'power inline never'
     CMD_POWER_ON = 'power inline auto'
+    CMD_POWER_LIMIT = 'power inline auto max {0}'
     CMD_POWER_SHOW = 'sh power inline'
 
     CMD_CONFIGURE_INTERFACE = 'int {0}'
@@ -177,6 +178,26 @@ class CiscoSwitch(object):
         matches, _ = CiscoSwitch._verify_poe_status(verify, port, "off")
         return matches
 
+    def poe_limit(self, port, milliwatts_limit):
+        """Enable a port for POE, but limit the maximum wattage.
+
+        :param port: port to enable POE on, e.g. Gi1/0/1
+        :param milliwatts_limit: the maximum wattage,
+            given in milliwatts, e.g. 15400. Cisco documentation
+            gives 4000 to 30000 as the valid range.
+        """
+        if not self.connected:
+            return False
+
+        port = self._shorthand_port_notation(port)
+        cmds = [self.CMD_CONFIGURE_INTERFACE.format(port),
+                self.CMD_POWER_LIMIT.format(milliwatts_limit)]
+        self._send_config(cmds)
+
+        verify = self._send_command(self.CMD_POWER_SHOW)
+        matches, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
+        return matches
+
     def is_poe(self, port):
         """Get the POE state for a port.
 
@@ -199,7 +220,7 @@ class CiscoSwitch(object):
         :return: True if the command succeeded, False otherwise
         """
         if not self.connected:
-            return
+            return False
 
         port = self._shorthand_port_notation(port)
         cmds = [
@@ -279,7 +300,7 @@ class CiscoSwitch(object):
         :return: shorthand port name
         """
         if port is None:
-            return
+            return ""
 
         lower = port.lower()
         output = port
@@ -389,7 +410,7 @@ class CiscoSwitch(object):
             # If the ignore_port is specified and is the port in question,
             # ignore it.
             ignore_port = self._shorthand_port_notation(ignore_port)
-            if ignore_port and values[3] == ignore_port:
+            if ignore_port == "" or values[3] == ignore_port:
                 continue
 
             lookup.append(
