@@ -3,27 +3,27 @@ clean:
 	rm -fR .eggs/ *.egg-info/ .coverage/ build/ dist/ docs/_build
 	find . -name *.pyc -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
-	python3 setup.py clean --all
+	python setup.py clean --all
 
 format:
 	black pynoc
 
 check:
-	python3 setup.py check --strict --metadata --verbose
+	python setup.py check --strict --metadata --verbose
 	pylint pynoc
-	python3 setup.py flake8
+	python setup.py flake8
 
 test: check
-	python3 setup.py nosetests
+	python setup.py nosetests
 
 docs:
-	python3 setup.py build_sphinx --fresh-env --all-files --build-dir docs/_build --config-dir docs --builder html --verbose
+	python setup.py build_sphinx --fresh-env --all-files --build-dir docs/_build --config-dir docs --builder html --verbose
 
 build: docs
-	python3 setup.py sdist bdist_wheel --dist-dir dist --verbose
+	python setup.py sdist bdist_wheel --dist-dir dist --verbose
 
 install:
-	python3 setup.py install
+	python setup.py install
 
 release:
 	twine upload dist/*
