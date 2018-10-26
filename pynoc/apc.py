@@ -8,7 +8,7 @@ from pysnmp.proto import rfc1902
 from retrying import retry, RetryError
 
 
-class APC():
+class APC(object):
     """APC Power Distribution Unit."""
 
     # pylint: disable=too-many-instance-attributes
@@ -16,7 +16,7 @@ class APC():
     # This class requires more attributes and public methods to cover the
     # functionality of the device.
 
-    ERROR_MSG = 'SNMP {} of {} on {} failed.'
+    ERROR_MSG = "SNMP {} of {} on {} failed."
 
     SNMP_VERSION_2_2C = 1
     SNMP_PORT = 161
@@ -92,43 +92,29 @@ class APC():
     Q_OUTLET_COMMAND_RW = BASE_OID + (9, 2, 4, 1, 5)  # Requires outlet number
 
     # Lookups
-    LOAD_STATES = [
-        '',
-        'lowLoad',
-        'normal',
-        'nearOverload',
-        'overload',
-    ]
+    LOAD_STATES = ["", "lowLoad", "normal", "nearOverload", "overload"]
     SENSOR_TYPES = [
-        '',
-        'temperatureOnly',
-        'temperatureHumidity',
-        'commsLost',
-        'notInstalled',
+        "",
+        "temperatureOnly",
+        "temperatureHumidity",
+        "commsLost",
+        "notInstalled",
     ]
-    COMM_STATUS_TYPES = [
-        '',
-        'notInstalled',
-        'commsOK',
-        'commsLost',
-    ]
+    COMM_STATUS_TYPES = ["", "notInstalled", "commsOK", "commsLost"]
     SENSOR_STATUS_TYPES = [
-        '',
-        'notPresent',
-        'belowMin',
-        'belowLow',
-        'normal',
-        'aboveHigh',
-        'aboveMax',
+        "",
+        "notPresent",
+        "belowMin",
+        "belowLow",
+        "normal",
+        "aboveHigh",
+        "aboveMax",
     ]
-    OUTLET_STATUS_TYPES = [
-        '',
-        'off',
-        'on',
-    ]
+    OUTLET_STATUS_TYPES = ["", "off", "on"]
 
-    def __init__(self, hostname_or_ip_address,
-                 public_community, private_community):
+    def __init__(
+        self, hostname_or_ip_address, public_community, private_community
+    ):
         """Create an APC object.
 
         :param hostname_or_ip_address: hostname or ip address of PDU
@@ -137,12 +123,12 @@ class APC():
         :return: APC object
         """
         self._host = hostname_or_ip_address
-        self._vendor = 'APC'
+        self._vendor = "APC"
 
         self._transport = cmdgen.UdpTransportTarget(
             (self._host, self.SNMP_PORT),
             timeout=self.SNMP_TIMEOUT,
-            retries=self.SNMP_RETRIES
+            retries=self.SNMP_RETRIES,
         )
         self._public = cmdgen.CommunityData(
             public_community, mpModel=self.SNMP_VERSION_2_2C
@@ -184,7 +170,7 @@ class APC():
 
         :return: PDU hostname or ip address
         """
-        self._logger.info('Host: %s', self._host)
+        self._logger.info("Host: %s", self._host)
         return self._host
 
     @property
@@ -193,7 +179,7 @@ class APC():
 
         :return: PDU vendor/manufacturer
         """
-        self._logger.info('Vendor: %s', self._vendor)
+        self._logger.info("Vendor: %s", self._vendor)
         return self._vendor
 
     @property
@@ -202,7 +188,7 @@ class APC():
 
         :return: PDU identification
         """
-        self._logger.info('Identification: %s', self._identification)
+        self._logger.info("Identification: %s", self._identification)
         return self._identification
 
     @property
@@ -211,7 +197,7 @@ class APC():
 
         :return: PDU location
         """
-        self._logger.info('Location: %s', self._location)
+        self._logger.info("Location: %s", self._location)
         return self._location
 
     @property
@@ -221,7 +207,7 @@ class APC():
         :return: PDU hardware revision
         """
         revision = str(self._hardware_rev)
-        self._logger.info('Hardware revision: %s', revision)
+        self._logger.info("Hardware revision: %s", revision)
         return revision
 
     @property
@@ -231,7 +217,7 @@ class APC():
         :return: PDU firmware revision
         """
         revision = str(self._firmware_rev)
-        self._logger.info('Firmware revision: %s', revision)
+        self._logger.info("Firmware revision: %s", revision)
         return revision
 
     @property
@@ -241,7 +227,7 @@ class APC():
         :return: PDU date of manufacture
         """
         self._logger.info(
-            'Date of Manufacture: %s', str(self._manufacture_date)
+            "Date of Manufacture: %s", str(self._manufacture_date)
         )
         return self._manufacture_date
 
@@ -252,7 +238,7 @@ class APC():
         :return: PDU model number
         """
         model = str(self._model_number)
-        self._logger.info('Model number: %s', model)
+        self._logger.info("Model number: %s", model)
         return model
 
     @property
@@ -262,7 +248,7 @@ class APC():
         :return: PDU serial number
         """
         serial = str(self._serial_number)
-        self._logger.info('Serial number: %s', serial)
+        self._logger.info("Serial number: %s", serial)
         return serial
 
     @property
@@ -272,7 +258,7 @@ class APC():
         :return: total number of outlets in the PDU
         """
         num = int(self._num_outlets)
-        self._logger.info('Number of outlets: %d', num)
+        self._logger.info("Number of outlets: %d", num)
         return num
 
     @property
@@ -282,7 +268,7 @@ class APC():
         :return: number of switched outlets in the PDU
         """
         num = int(self._num_switched_outlets)
-        self._logger.info('Number of switched outlets: %d', num)
+        self._logger.info("Number of switched outlets: %d", num)
         return num
 
     @property
@@ -292,7 +278,7 @@ class APC():
         :return: number of metered outlets in the PDU
         """
         num = int(self._num_metered_outlets)
-        self._logger.info('Number of metered outlets: %d', num)
+        self._logger.info("Number of metered outlets: %d", num)
         return num
 
     @property
@@ -302,7 +288,7 @@ class APC():
         :return: maximum current for the PDU
         """
         current = int(self._max_current)
-        self._logger.info('Maximum current: %d', current)
+        self._logger.info("Maximum current: %d", current)
         return current
 
     @property
@@ -312,7 +298,7 @@ class APC():
         :return: PDU line voltage
         """
         voltage = int(self._phase_voltage)
-        self._logger.info('Line voltage: %d', voltage)
+        self._logger.info("Line voltage: %d", voltage)
         return voltage
 
     @property
@@ -322,7 +308,7 @@ class APC():
         :return: one of ['lowLoad', 'normal', 'nearOverload', overload']
         """
         state = int(self.__get(self.Q_PHASE_LOAD_STATE))
-        self._logger.info('Load state: %s', self.LOAD_STATES[state])
+        self._logger.info("Load state: %s", self.LOAD_STATES[state])
         return self.LOAD_STATES[state]
 
     @property
@@ -331,10 +317,8 @@ class APC():
 
         :return: current, in amps
         """
-        current = float(
-            self.__get(self.Q_PHASE_CURRENT) / self._current_factor
-        )
-        self._logger.info('Current: %.2f', current)
+        current = float(self.__get(self.Q_PHASE_CURRENT) / self._current_factor)
+        self._logger.info("Current: %.2f", current)
         return current
 
     @property
@@ -344,7 +328,7 @@ class APC():
         :return: power, in kW
         """
         power = float(self.__get(self.Q_POWER) / self._power_factor)
-        self._logger.info('Power: %.2f', power)
+        self._logger.info("Power: %.2f", power)
         return power
 
     @property
@@ -355,7 +339,7 @@ class APC():
         """
         state = self.__get(self.Q_SENSOR_TYPE)
         present = 1 < int(state) < 3
-        self._logger.info('Sensor present: %s', str(present))
+        self._logger.info("Sensor present: %s", str(present))
         return present
 
     @property
@@ -367,7 +351,7 @@ class APC():
         name = None
         if self.is_sensor_present:
             name = str(self.__get(self.Q_SENSOR_NAME))
-        self._logger.info('Sensor name: %s', name)
+        self._logger.info("Sensor name: %s", name)
         return name
 
     @sensor_name.setter
@@ -379,7 +363,7 @@ class APC():
         """
         if self.is_sensor_present:
             self.__set(self.Q_SENSOR_NAME_RW, name)
-            self._logger.info('Updating sensor name to: %s', name)
+            self._logger.info("Updating sensor name to: %s", name)
 
     @property
     def sensor_type(self):
@@ -392,7 +376,7 @@ class APC():
         index = 4
         if self.is_sensor_present:
             index = int(self.__get(self.Q_SENSOR_TYPE))
-        self._logger.info('Sensor type: %s', self.SENSOR_TYPES[index])
+        self._logger.info("Sensor type: %s", self.SENSOR_TYPES[index])
         return self.SENSOR_TYPES[index]
 
     @property
@@ -405,7 +389,7 @@ class APC():
         if self.is_sensor_present:
             index = int(self.__get(self.Q_SENSOR_COMM_STATUS))
         self._logger.info(
-            'Sensor communication status: %s', self.SENSOR_STATUS_TYPES[index]
+            "Sensor communication status: %s", self.SENSOR_STATUS_TYPES[index]
         )
         return self.SENSOR_STATUS_TYPES[index]
 
@@ -415,7 +399,7 @@ class APC():
 
         :return: using centigrade or not
         """
-        self._logger.info('Use centigrade: %s', str(self._use_centigrade))
+        self._logger.info("Use centigrade: %s", str(self._use_centigrade))
         return self._use_centigrade
 
     @use_centigrade.setter
@@ -425,7 +409,7 @@ class APC():
         :param value: use centrigrade or not
         :return:
         """
-        self._logger.info('Updating use centigrade to: %s', value)
+        self._logger.info("Updating use centigrade to: %s", value)
         self._use_centigrade = value
 
     @property
@@ -440,7 +424,7 @@ class APC():
                 temp = float(self.__get(self.Q_SENSOR_TEMP_C) / 10)
             else:
                 temp = float(self.__get(self.Q_SENSOR_TEMP_F) / 10)
-        self._logger.info('Temperature: %.2f', temp)
+        self._logger.info("Temperature: %.2f", temp)
         return temp
 
     @property
@@ -452,7 +436,7 @@ class APC():
         humid = 0.00
         if self.sensor_supports_humidity:
             humid = float(self.__get(self.Q_SENSOR_HUMIDITY))
-        self._logger.info('Relative humidity: %.2f', humid)
+        self._logger.info("Relative humidity: %.2f", humid)
         return humid
 
     @property
@@ -465,7 +449,7 @@ class APC():
         if self.sensor_supports_temperature:
             index = self.__get(self.Q_SENSOR_TEMP_STATUS)
         self._logger.info(
-            'Temperature sensor status: %s', self.SENSOR_STATUS_TYPES[index]
+            "Temperature sensor status: %s", self.SENSOR_STATUS_TYPES[index]
         )
         return self.SENSOR_STATUS_TYPES[index]
 
@@ -479,8 +463,8 @@ class APC():
         if self.sensor_supports_humidity:
             index = self.__get(self.Q_SENSOR_HUMIDITY_STATUS)
         self._logger.info(
-            'Relative humidity sensor status: %s',
-            self.SENSOR_STATUS_TYPES[index]
+            "Relative humidity sensor status: %s",
+            self.SENSOR_STATUS_TYPES[index],
         )
         return self.SENSOR_STATUS_TYPES[index]
 
@@ -492,11 +476,13 @@ class APC():
         """
         if 1 <= outlet <= self._num_outlets:
             name = str(self.__get(self.Q_OUTLET_NAME + (outlet,)))
-            self._logger.info('Outlet number %d has name %s', outlet, name)
+            self._logger.info("Outlet number %d has name %s", outlet, name)
             return name
         raise IndexError(
             'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                self._num_outlets, str(outlet)))
+                self._num_outlets, str(outlet)
+            )
+        )
 
     def set_outlet_name(self, outlet, name):
         """Update the name of an outlet in the PDU.
@@ -508,11 +494,13 @@ class APC():
         if 1 <= outlet <= self._num_outlets:
             self.__set(self.Q_OUTLET_NAME_RW + (outlet,), name)
             self._logger.info(
-                'Updating outlet number %d to new name %s', outlet, name
+                "Updating outlet number %d to new name %s", outlet, name
             )
         raise IndexError(
             'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                self._num_outlets, str(outlet)))
+                self._num_outlets, str(outlet)
+            )
+        )
 
     def outlet_status(self, outlet):
         """Determine the status of the outlet in the PDU.
@@ -523,13 +511,16 @@ class APC():
         if 1 <= outlet <= self._num_outlets:
             state = self.__get(self.Q_OUTLET_STATUS + (outlet,))
             self._logger.info(
-                'Outlet number %d has status %s', outlet,
-                self.OUTLET_STATUS_TYPES[state]
+                "Outlet number %d has status %s",
+                outlet,
+                self.OUTLET_STATUS_TYPES[state],
             )
             return self.OUTLET_STATUS_TYPES[state]
         raise IndexError(
             'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                self._num_outlets, str(outlet)))
+                self._num_outlets, str(outlet)
+            )
+        )
 
     def outlet_command(self, outlet, operation):
         """Send command to an outlet in the PDU.
@@ -538,31 +529,29 @@ class APC():
         :param operation: one of ['on', 'off', 'reboot']
         :return: did the operation complete successfully?
         """
-        valid_operations = ['on', 'off', 'reboot']
+        valid_operations = ["on", "off", "reboot"]
         if operation not in valid_operations:
             raise ValueError(
                 '"{}" is an invalid operation. Valid operations are: {}'.format(
-                    str(operation), str(valid_operations)))
+                    str(operation), str(valid_operations)
+                )
+            )
 
-        operations = {
-            'on': 1,
-            'off': 2,
-            'reboot': 3,
-        }
+        operations = {"on": 1, "off": 2, "reboot": 3}
 
         if 1 <= outlet <= self._num_outlets:
             self._logger.info(
-                'Setting outlet %d to %s state', outlet, operation
+                "Setting outlet %d to %s state", outlet, operation
             )
             self.__set(
                 self.Q_OUTLET_COMMAND_RW + (outlet,), operations[operation]
             )
 
             try:
-                if operation in ('on', 'reboot'):
-                    success = self.__wait_for_state(outlet, 'on')
+                if operation in ("on", "reboot"):
+                    success = self.__wait_for_state(outlet, "on")
                 else:
-                    success = self.__wait_for_state(outlet, 'off')
+                    success = self.__wait_for_state(outlet, "off")
             except RetryError:
                 # If the operation timed out, no determination of the result
                 # can be made.
@@ -571,7 +560,9 @@ class APC():
             return success
         raise IndexError(
             'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                self._num_outlets, str(outlet)))
+                self._num_outlets, str(outlet)
+            )
+        )
 
     @property
     def sensor_supports_temperature(self):
@@ -579,7 +570,7 @@ class APC():
 
         :return: does the sensor support temperature measurements?
         """
-        return self.is_sensor_present and 'temp' in self.sensor_type.lower()
+        return self.is_sensor_present and "temp" in self.sensor_type.lower()
 
     @property
     def sensor_supports_humidity(self):
@@ -587,7 +578,7 @@ class APC():
 
         :return: does the sensor support relative humidity measurements?
         """
-        return self.is_sensor_present and 'humid' in self.sensor_type.lower()
+        return self.is_sensor_present and "humid" in self.sensor_type.lower()
 
     # pylint: disable=no-self-argument
     # In order to use this method within the @retry decorator, this method
@@ -600,8 +591,9 @@ class APC():
         return not result
 
     @retry(
-        stop_max_delay=MAX_STOP_DELAY, wait_fixed=INTER_RETRY_WAIT,
-        retry_on_result=__retry_if_not_state
+        stop_max_delay=MAX_STOP_DELAY,
+        wait_fixed=INTER_RETRY_WAIT,
+        retry_on_result=__retry_if_not_state,
     )
     def __wait_for_state(self, outlet, state):
         """Wait until state is hit.
@@ -622,12 +614,10 @@ class APC():
         :returns: value from the specified OID
         """
         (error_indication, _, _, var_binds) = cmdgen.CommandGenerator().getCmd(
-            self._public,
-            self._transport,
-            oid
+            self._public, self._transport, oid
         )
         if error_indication:
-            raise RuntimeError(self.ERROR_MSG.format('get', oid, self._host))
+            raise RuntimeError(self.ERROR_MSG.format("get", oid, self._host))
 
         return var_binds[0][1]
 
@@ -641,12 +631,10 @@ class APC():
         new_value = self.__coerce_value(initial_value, value)
 
         (error_indication, _, _, var_binds) = cmdgen.CommandGenerator().setCmd(
-            self._private,
-            self._transport,
-            (oid, new_value)
+            self._private, self._transport, (oid, new_value)
         )
         if error_indication:
-            raise RuntimeError(self.ERROR_MSG.format('set', oid, self._host))
+            raise RuntimeError(self.ERROR_MSG.format("set", oid, self._host))
 
         return var_binds[0][1]
 
@@ -683,6 +671,6 @@ class APC():
         elif isinstance(initial_value, rfc1902.Unsigned32):
             set_value = rfc1902.Unsigned32(str(new_value))
         else:
-            raise RuntimeError('Unknown type: {}'.format(type(initial_value)))
+            raise RuntimeError("Unknown type: {}".format(type(initial_value)))
 
         return set_value

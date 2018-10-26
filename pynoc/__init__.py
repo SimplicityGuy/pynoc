@@ -13,4 +13,4 @@ from .apc import APC
 # pylint: disable=maybe-no-member
 # False positives: This message may report object members that are
 # created dynamically, but exist at the time they are accessed.
-__version__ = get_distribution('pynoc').version
+__version__ = get_distribution("pynoc").version

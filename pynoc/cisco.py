@@ -14,11 +14,12 @@ def deprecated(func):
     as deprecated. It will result in a warning being emitted
     when the function is used.
     """
+
     def new_func(*args, **kwargs):
         """Set the warning message."""
         warnings.warn(
             "Call to deprecated function {}.".format(func.__name__),
-            category=DeprecationWarning
+            category=DeprecationWarning,
         )
         return func(*args, **kwargs)
 
@@ -29,7 +30,7 @@ def deprecated(func):
     return new_func
 
 
-class CiscoSwitch():
+class CiscoSwitch(object):
     """Cisco switch control."""
 
     # pylint: disable=len-as-condition
@@ -37,30 +38,30 @@ class CiscoSwitch():
 
     MAX_COMMAND_READ = 16
 
-    CMD_VERSION = 'sh version'
-    CMD_VERSION_SIGNALS = ['BOOTLDR']
+    CMD_VERSION = "sh version"
+    CMD_VERSION_SIGNALS = ["BOOTLDR"]
 
-    CMD_IPDT = 'sh ip device track all'
+    CMD_IPDT = "sh ip device track all"
 
-    CMD_MAC_ADDRESS_TABLE = 'sh mac address-table'
+    CMD_MAC_ADDRESS_TABLE = "sh mac address-table"
 
-    CMD_POWER_OFF = 'power inline never'
-    CMD_POWER_ON = 'power inline auto'
-    CMD_POWER_LIMIT = 'power inline auto max {0}'
-    CMD_POWER_SHOW = 'sh power inline {0}'
+    CMD_POWER_OFF = "power inline never"
+    CMD_POWER_ON = "power inline auto"
+    CMD_POWER_LIMIT = "power inline auto max {0}"
+    CMD_POWER_SHOW = "sh power inline {0}"
 
-    CMD_CONFIGURE_INTERFACE = 'int {0}'
+    CMD_CONFIGURE_INTERFACE = "int {0}"
 
-    CMD_VLAN_MODE_ACCESS = 'switchport mode access'
-    CMD_VLAN_SET = 'switchport access vlan {0}'
-    CMD_VLAN_SHOW = 'sh vlan'
+    CMD_VLAN_MODE_ACCESS = "switchport mode access"
+    CMD_VLAN_SET = "switchport access vlan {0}"
+    CMD_VLAN_SHOW = "sh vlan"
 
-    CMD_CARRIAGE_RETURN = '\n'
+    CMD_CARRIAGE_RETURN = "\n"
 
     PORT_NOTATION = {
-        'fastethernet': 'Fa',
-        'gigabitethernet': 'Gi',
-        'tengigabitethernet': 'Ten',
+        "fastethernet": "Fa",
+        "gigabitethernet": "Gi",
+        "tengigabitethernet": "Ten",
     }
 
     def __init__(self, hostname_or_ip_address, username, password):
@@ -86,8 +87,10 @@ class CiscoSwitch():
         :return:
         """
         self._client = ConnectHandler(
-            device_type='cisco_ios', ip=self._host, username=self._username,
-            password=self._password
+            device_type="cisco_ios",
+            ip=self._host,
+            username=self._username,
+            password=self._password,
         )
 
     def disconnect(self):
@@ -190,8 +193,10 @@ class CiscoSwitch():
             return False
 
         port = self._shorthand_port_notation(port)
-        cmds = [self.CMD_CONFIGURE_INTERFACE.format(port),
-                self.CMD_POWER_LIMIT.format(milliwatts_limit)]
+        cmds = [
+            self.CMD_CONFIGURE_INTERFACE.format(port),
+            self.CMD_POWER_LIMIT.format(milliwatts_limit),
+        ]
         self._send_config(cmds)
 
         verify = self._send_command(self.CMD_POWER_SHOW.format(port))
@@ -227,7 +232,7 @@ class CiscoSwitch():
         cmds = [
             self.CMD_CONFIGURE_INTERFACE.format(port),
             self.CMD_VLAN_MODE_ACCESS,
-            self.CMD_VLAN_SET.format(int(vlan))
+            self.CMD_VLAN_SET.format(int(vlan)),
         ]
         self._send_config(cmds)
 
@@ -352,15 +357,15 @@ class CiscoSwitch():
         :return: version string
         """
         lines = [line.strip() for line in output.splitlines()]
-        version = ''
+        version = ""
         search = True
         while len(lines) > 0 and search:
             line = lines.pop()
 
-            if line.find('Cisco IOS') < 0:
+            if line.find("Cisco IOS") < 0:
                 continue
 
-            version_info = line.split(',')
+            version_info = line.split(",")
 
             if len(version_info) > 1:
                 version = version_info[2].strip()
@@ -391,21 +396,22 @@ class CiscoSwitch():
         """
         lookup = []
         lines = [line.strip() for line in output.splitlines()]
-        lines.append('')
+        lines.append("")
         while len(lines) > 0:
             line = lines.pop(0)
 
             # Table entries will always have a '.' for the MAC address.
             # If there isn't one it's not a row we care about.
-            if line.find('.') < 0:
+            if line.find(".") < 0:
                 continue
 
             values = [entry for entry in line.split() if entry]
 
             # Ignore non-physical ports
             port_types = self.PORT_NOTATION.values()
-            if all(values[3].lower().find(port.lower()) != 0
-                   for port in port_types):
+            if all(
+                values[3].lower().find(port.lower()) != 0 for port in port_types
+            ):
                 continue
 
             # If the ignore_port is specified and is the port in question,
@@ -416,11 +422,11 @@ class CiscoSwitch():
 
             lookup.append(
                 {
-                    'mac': EUI(values[1], dialect=mac_unix_expanded),
-                    'interface': self._shorthand_port_notation(values[3])
+                    "mac": EUI(values[1], dialect=mac_unix_expanded),
+                    "interface": self._shorthand_port_notation(values[3]),
                 }
             )
-        return sorted(lookup, key=lambda k: k['interface'])
+        return sorted(lookup, key=lambda k: k["interface"])
 
     def _parse_ipdt_output(self, output):
         """IPDT output parsing.
@@ -447,30 +453,30 @@ class CiscoSwitch():
         """
         lookup = []
         lines = [line.strip() for line in output.splitlines()]
-        lines.append('')
+        lines.append("")
         while len(lines) > 0:
             line = lines.pop(0)
 
             # Table entries will always have a '.' for the MAC address.
             # If there isn't one it's not a row we care about.
-            if line.find('.') < 0:
+            if line.find(".") < 0:
                 continue
 
             values = [entry for entry in line.split() if entry]
 
             # Ignore any 'INACTIVE' entries, meaning that there hasn't been
             # traffic from that MAC Address is has likely been unplugged.
-            if values[4] == 'INACTIVE':
+            if values[4] == "INACTIVE":
                 continue
 
             lookup.append(
                 {
-                    'ip': values[0],
-                    'mac': EUI(values[1], dialect=mac_unix_expanded),
-                    'interface': self._shorthand_port_notation(values[3])
+                    "ip": values[0],
+                    "mac": EUI(values[1], dialect=mac_unix_expanded),
+                    "interface": self._shorthand_port_notation(values[3]),
                 }
             )
-        return sorted(lookup, key=lambda k: k['interface'])
+        return sorted(lookup, key=lambda k: k["interface"])
 
     @staticmethod
     def _verify_poe_status(output, port, state):
@@ -497,7 +503,7 @@ class CiscoSwitch():
 
         matches = False
         lines = [line.strip() for line in output.splitlines()]
-        lines.append('')
+        lines.append("")
         actual_state = "unknown"
         milliwatts_limit = 0
         while len(lines) > 0:
@@ -505,7 +511,7 @@ class CiscoSwitch():
 
             # Table entries will always have a '/' for the interface.
             # If there isn't one it's not a row we care about.
-            if line.find('/') < 0:
+            if line.find("/") < 0:
                 continue
 
             values = [entry for entry in line.split() if entry]
@@ -543,20 +549,20 @@ class CiscoSwitch():
         """
         matches = False
         lines = [line.strip() for line in output.splitlines()]
-        lines.append('')
+        lines.append("")
         actual_vlan = -1
         current_vlan = -1
         while len(lines) > 0:
-            line = lines.pop(0).replace(',', '')
+            line = lines.pop(0).replace(",", "")
 
             # Table entries will have a '/' for the ports.
             # If there isn't one it's not a row we care about, even if it's a
             # vlan with no ports assigned to it.
-            if line.find('/') < 0:
+            if line.find("/") < 0:
                 continue
 
             values = [entry for entry in line.split() if entry]
-            if 'active' in values:
+            if "active" in values:
                 current_vlan = int(values[0])
                 ports = values[3:]
             else:
