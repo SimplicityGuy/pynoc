@@ -28,8 +28,10 @@ install:
 release:
 	twine upload dist/*
 
-all: clean format check docs build
+all: clean check docs build
 
 allwithtests: all test
+
+allwithformat: clean format check docs build
 
 .PHONY: clean format check test docs install release
