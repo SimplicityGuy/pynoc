@@ -36,11 +36,13 @@ load-plugins=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 
+# C0330: Wrong hanging indentation before block (add 4 spaces)
 # I0011: Locally disabling %s
 # I0013: Ignoring entire file
+# R0205: Useless object inheritance --> This can be undone when the project moves to Python 3.x only.
 # W0403: Relative import '(%s)', should be '(%s)'
 # W0633: Attempting to unpack a non-sequence defined at line (%s) of (%s)
-disable=I0011,I0013,W0403,W0633
+disable=C0330,I0011,I0013,R0205,W0403,W0633
 
 [REPORTS]
 
