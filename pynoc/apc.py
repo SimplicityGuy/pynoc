@@ -8,7 +8,7 @@ from pysnmp.proto import rfc1902
 from retrying import retry, RetryError
 
 
-class APC(object):
+class APC():
     """APC Power Distribution Unit."""
 
     # pylint: disable=too-many-instance-attributes
@@ -494,10 +494,9 @@ class APC(object):
             name = str(self.__get(self.Q_OUTLET_NAME + (outlet,)))
             self._logger.info('Outlet number %d has name %s', outlet, name)
             return name
-        else:
-            raise IndexError(
-                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                    self._num_outlets, str(outlet)))
+        raise IndexError(
+            'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                self._num_outlets, str(outlet)))
 
     def set_outlet_name(self, outlet, name):
         """Update the name of an outlet in the PDU.
@@ -511,10 +510,9 @@ class APC(object):
             self._logger.info(
                 'Updating outlet number %d to new name %s', outlet, name
             )
-        else:
-            raise IndexError(
-                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                    self._num_outlets, str(outlet)))
+        raise IndexError(
+            'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                self._num_outlets, str(outlet)))
 
     def outlet_status(self, outlet):
         """Determine the status of the outlet in the PDU.
@@ -529,10 +527,9 @@ class APC(object):
                 self.OUTLET_STATUS_TYPES[state]
             )
             return self.OUTLET_STATUS_TYPES[state]
-        else:
-            raise IndexError(
-                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                    self._num_outlets, str(outlet)))
+        raise IndexError(
+            'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                self._num_outlets, str(outlet)))
 
     def outlet_command(self, outlet, operation):
         """Send command to an outlet in the PDU.
@@ -572,10 +569,9 @@ class APC(object):
                 success = False
 
             return success
-        else:
-            raise IndexError(
-                'Only {} outlets exist. "{}" is an invalid outlet.'.format(
-                    self._num_outlets, str(outlet)))
+        raise IndexError(
+            'Only {} outlets exist. "{}" is an invalid outlet.'.format(
+                self._num_outlets, str(outlet)))
 
     @property
     def sensor_supports_temperature(self):

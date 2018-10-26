@@ -29,7 +29,7 @@ def deprecated(func):
     return new_func
 
 
-class CiscoSwitch(object):
+class CiscoSwitch():
     """Cisco switch control."""
 
     # pylint: disable=len-as-condition
@@ -411,7 +411,7 @@ class CiscoSwitch(object):
             # If the ignore_port is specified and is the port in question,
             # ignore it.
             ignore_port = self._shorthand_port_notation(ignore_port)
-            if ignore_port == "" or values[3] == ignore_port:
+            if ignore_port in ("", values[3]):
                 continue
 
             lookup.append(
