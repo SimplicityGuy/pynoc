@@ -47,7 +47,7 @@ class CiscoSwitch(object):
     CMD_POWER_OFF = 'power inline never'
     CMD_POWER_ON = 'power inline auto'
     CMD_POWER_LIMIT = 'power inline auto max {0}'
-    CMD_POWER_SHOW = 'sh power inline'
+    CMD_POWER_SHOW = 'sh power inline {0}'
 
     CMD_CONFIGURE_INTERFACE = 'int {0}'
 
@@ -157,8 +157,8 @@ class CiscoSwitch(object):
         cmds = [self.CMD_CONFIGURE_INTERFACE.format(port), self.CMD_POWER_ON]
         self._send_config(cmds)
 
-        verify = self._send_command(self.CMD_POWER_SHOW)
-        matches, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
+        verify = self._send_command(self.CMD_POWER_SHOW.format(port))
+        matches, _, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
         return matches
 
     def poe_off(self, port):
@@ -174,8 +174,8 @@ class CiscoSwitch(object):
         cmds = [self.CMD_CONFIGURE_INTERFACE.format(port), self.CMD_POWER_OFF]
         self._send_config(cmds)
 
-        verify = self._send_command(self.CMD_POWER_SHOW)
-        matches, _ = CiscoSwitch._verify_poe_status(verify, port, "off")
+        verify = self._send_command(self.CMD_POWER_SHOW.format(port))
+        matches, _, _ = CiscoSwitch._verify_poe_status(verify, port, "off")
         return matches
 
     def poe_limit(self, port, milliwatts_limit):
@@ -194,23 +194,24 @@ class CiscoSwitch(object):
                 self.CMD_POWER_LIMIT.format(milliwatts_limit)]
         self._send_config(cmds)
 
-        verify = self._send_command(self.CMD_POWER_SHOW)
-        matches, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
+        verify = self._send_command(self.CMD_POWER_SHOW.format(port))
+        matches, _, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
         return matches
 
     def is_poe(self, port):
         """Get the POE state for a port.
 
         :param port: port to determine state of, e.g. Gi1/0/1
-        :return: True if POE is enabled, False otherwise
+        :return: milliwatts_limit (a non-zero integer), evaluating to True if
+            POE is enabled, else 0 (False).
         """
         if not self.connected:
-            return "unknown"
+            return 0
 
         port = self._shorthand_port_notation(port)
-        verify = self._send_command(self.CMD_POWER_SHOW)
-        _, poe = CiscoSwitch._verify_poe_status(verify, port, "unknown")
-        return "auto" in poe
+        verify = self._send_command(self.CMD_POWER_SHOW.format(port))
+        _, poe, limit = CiscoSwitch._verify_poe_status(verify, port, "unknown")
+        return 0 if poe == "off" else limit
 
     def change_vlan(self, port, vlan):
         """Change the VLAN assignment on a port.
@@ -476,20 +477,20 @@ class CiscoSwitch(object):
         """Verify that the given port is in the given state.
 
         :param output: the output of the command
-            Module   Available     Used     Remaining
-                      (Watts)     (Watts)    (Watts)
-            ------   ---------   --------   ---------
-            1           740.0      138.6       601.4
             Interface Admin  Oper       Power   Device              Class Max
                                         (Watts)
             --------- ------ ---------- ------- ------------------- ----- ----
-            Gi1/0/1   auto   off        0.0     n/a                 n/a   15.4
-            Gi1/0/2   auto   on         0.0     n/a                 n/a   15.4
-            Gi1/0/3   off    off        0.0     n/a                 n/a   15.4
+            Gi2/0/16  auto   on         15.4    Ieee PD             0     30.0
+
+            Interface  AdminPowerMax   AdminConsumption
+                         (Watts)           (Watts)
+            ---------- --------------- --------------------
+
+            Gi2/0/16              30.0                 15.4
         :param port: port to check
         :param state: expected state
-        :return: (True, actual state) if the port is in the expected state,
-        (False, actual state) otherwise
+        :return: (True, actual_state, milliwatts_limit) if the port is in the
+            expected state, (False, actual_state, milliwatts_limit) otherwise.
         """
         if "on" in state:
             state = "auto"
@@ -498,6 +499,7 @@ class CiscoSwitch(object):
         lines = [line.strip() for line in output.splitlines()]
         lines.append('')
         actual_state = "unknown"
+        milliwatts_limit = 0
         while len(lines) > 0:
             line = lines.pop(0)
 
@@ -514,9 +516,11 @@ class CiscoSwitch(object):
 
             matches = state in values[1]
             actual_state = values[1]
+            # The last column, "Max", gives Watts to the to tenths spot
+            milliwatts_limit = int(float(values[-1]) * 1000.0)
             break
 
-        return matches, actual_state
+        return matches, actual_state, milliwatts_limit
 
     @staticmethod
     def _verify_vlan_status(output, port, vlan):
