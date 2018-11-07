@@ -417,7 +417,7 @@ class CiscoSwitch(object):
             # If the ignore_port is specified and is the port in question,
             # ignore it.
             ignore_port = self._shorthand_port_notation(ignore_port)
-            if ignore_port in ("", values[3]):
+            if ignore_port is not None and ignore_port == values[3]:
                 continue
 
             lookup.append(
