@@ -47,7 +47,9 @@ class CiscoSwitch(object):
 
     CMD_POWER_OFF = "power inline never"
     CMD_POWER_ON = "power inline auto"
-    CMD_POWER_LIMIT = "power inline auto max {0}"
+    CMD_POWER_LIMIT = "power inline {0} max {1}"
+    CMD_POWER_LIMIT_AUTO = "auto"
+    CMD_POWER_LIMIT_STATIC = "static"
     CMD_POWER_SHOW = "sh power inline {0}"
 
     CMD_CONFIGURE_INTERFACE = "int {0}"
@@ -181,26 +183,37 @@ class CiscoSwitch(object):
         matches, _, _ = CiscoSwitch._verify_poe_status(verify, port, "off")
         return matches
 
-    def poe_limit(self, port, milliwatts_limit):
+    def poe_limit(self, port, milliwatts_limit, static=True):
         """Enable a port for POE, but limit the maximum wattage.
+
+        The default option used is "static", because it ensures the
+        power limit is set regardless. The side-effect is that this
+        is likely to remove and reapply power to the port if it is
+        currently set to "auto", cycling any powered device (PD)
+        connected to it.
 
         :param port: port to enable POE on, e.g. Gi1/0/1
         :param milliwatts_limit: the maximum wattage,
             given in milliwatts, e.g. 15400. Cisco documentation
             gives 4000 to 30000 as the valid range.
+        :param static: whether to use the "static" option (default)
+            or "auto"
         """
         if not self.connected:
             return False
 
+        option = (
+            self.CMD_POWER_LIMIT_STATIC if static else self.CMD_POWER_LIMIT_AUTO
+        )
         port = self._shorthand_port_notation(port)
         cmds = [
             self.CMD_CONFIGURE_INTERFACE.format(port),
-            self.CMD_POWER_LIMIT.format(milliwatts_limit),
+            self.CMD_POWER_LIMIT.format(option, milliwatts_limit),
         ]
         self._send_config(cmds)
 
         verify = self._send_command(self.CMD_POWER_SHOW.format(port))
-        matches, _, _ = CiscoSwitch._verify_poe_status(verify, port, "on")
+        matches, _, _ = CiscoSwitch._verify_poe_status(verify, port, option)
         return matches
 
     def is_poe(self, port):
