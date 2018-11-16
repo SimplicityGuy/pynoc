@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pynoc',
-    version='1.6.2',
+    version='1.6.3',
 
     description='Network Operation Center gear',
     long_description='Python package to handle interact with various '
